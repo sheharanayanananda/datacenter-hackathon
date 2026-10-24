@@ -2,12 +2,15 @@ import { User, GameSave } from '../types/game'
 
 const TOKEN_KEY = 'ecotown_jwt_token'
 
+let inMemoryToken: string | null = null
+
 export const getStoredToken = (): string | null => {
-  return localStorage.getItem(TOKEN_KEY)
+  return inMemoryToken || localStorage.getItem(TOKEN_KEY)
 }
 
-export const setStoredToken = (token: string | null) => {
-  if (token) {
+export const setStoredToken = (token: string | null, persist: boolean = true) => {
+  inMemoryToken = token
+  if (token && persist) {
     localStorage.setItem(TOKEN_KEY, token)
   } else {
     localStorage.removeItem(TOKEN_KEY)
@@ -35,7 +38,7 @@ export const api = {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to sign up')
-      setStoredToken(data.token)
+      setStoredToken(data.token, true)
       return data
     },
 
@@ -47,7 +50,7 @@ export const api = {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to sign in')
-      setStoredToken(data.token)
+      setStoredToken(data.token, true)
       return data
     },
 
@@ -58,7 +61,7 @@ export const api = {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to start guest session')
-      setStoredToken(data.token)
+      setStoredToken(data.token, false) // Ephemeral session in memory only; never saved to localStorage
       return data
     },
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useGame } from '../context/GameContext'
-import { Building2, User, Lock, Mail, Sparkles, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react'
+import { Building2, User, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react'
 
 export const AuthModal: React.FC = () => {
   const { user, signIn, signUp, signInAsGuest } = useGame()
@@ -8,7 +8,6 @@ export const AuthModal: React.FC = () => {
   const [identifier, setIdentifier] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState('Municipal Climate Director')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -24,7 +23,7 @@ export const AuthModal: React.FC = () => {
         if (!identifier || !email || !password) {
           throw new Error('Please fill in all required fields.')
         }
-        await signUp(identifier, email, password, role)
+        await signUp(identifier, email, password)
       } else {
         if (!identifier || !password) {
           throw new Error('Please enter your username and password.')
@@ -59,14 +58,8 @@ export const AuthModal: React.FC = () => {
             <Building2 className="w-7 h-7 stroke-[2.5]" />
           </div>
           <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-            Tampere Municipal Portal
+            Datacenter Simulator
           </h2>
-          <p className="text-[11px] font-black text-emerald-700 uppercase tracking-widest mt-0.5">
-            Data Center & District Heat Simulation
-          </p>
-          <p className="text-xs text-slate-500 font-medium mt-1 max-w-xs">
-            Sign in to direct Tampere’s green data center and district heating transition.
-          </p>
         </div>
 
         {/* Tab Switcher */}
@@ -160,27 +153,10 @@ export const AuthModal: React.FC = () => {
             </div>
           </div>
 
-          {isSignUp && (
-            <div>
-              <label className="block text-[11px] font-black text-slate-600 uppercase tracking-wider mb-1">
-                Municipal Role
-              </label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-2 px-3.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-500 transition-all"
-              >
-                <option value="Municipal Climate Director">Municipal Climate Director</option>
-                <option value="Energy & Infrastructure Lead">Energy & Infrastructure Lead</option>
-                <option value="Urban Planning Commissioner">Urban Planning Commissioner</option>
-              </select>
-            </div>
-          )}
-
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-2.5 px-4 rounded-2xl font-black text-xs text-white bg-emerald-600 hover:bg-emerald-500 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+            className="w-full mt-8 py-3 px-4 rounded-2xl font-black text-xs text-white bg-emerald-600 hover:bg-emerald-500 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
           >
             {loading ? (
               <span>Loading...</span>
@@ -193,28 +169,17 @@ export const AuthModal: React.FC = () => {
           </button>
         </form>
 
-        {/* Divider */}
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200" />
-          </div>
-          <div className="relative flex justify-center text-[10px]">
-            <span className="bg-white px-2.5 text-slate-400 font-black uppercase tracking-wider">
-              Hackathon Quick Access
-            </span>
-          </div>
+        {/* Demo Mode Text Link */}
+        <div className="text-center mt-4">
+          <button
+            type="button"
+            onClick={handleGuest}
+            disabled={loading}
+            className="text-xs font-bold text-slate-500 hover:text-emerald-700 underline underline-offset-4 decoration-slate-300 hover:decoration-emerald-500 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            Enter Demo Mode
+          </button>
         </div>
-
-        {/* Guest Button */}
-        <button
-          type="button"
-          onClick={handleGuest}
-          disabled={loading}
-          className="w-full py-2 px-4 rounded-2xl font-black text-xs text-amber-900 bg-amber-100 hover:bg-amber-200 border-2 border-amber-300 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <Sparkles className="w-4 h-4 text-amber-600" />
-          <span>Enter as Guest Mayor (Instant One-Click Demo)</span>
-        </button>
       </div>
     </div>
   )

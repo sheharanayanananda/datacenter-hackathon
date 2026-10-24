@@ -125,30 +125,36 @@ app.post('/api/auth/signin', (req, res) => {
   }
 })
 
-// 4. Quick Guest Mayor Access (For Evaluators & Hackathon Judges)
+// 4. Quick Guest Mayor Access (Ephemeral In-Memory Demo for Hackathon Evaluators)
 app.post('/api/auth/guest', (req, res) => {
   try {
-    const guestUsername = 'guest_mayor'
-    let userRow = userQueries.findByUsername.get(guestUsername)
-
-    if (!userRow) {
-      const salt = bcrypt.genSaltSync(8)
-      const passwordHash = bcrypt.hashSync('nordic2026', salt)
-      const info = userQueries.create.run(guestUsername, 'guest@tampere.fi', passwordHash, 'Guest Municipal Mayor')
-      const userId = Number(info.lastInsertRowid)
-      saveQueries.createInitialSave.run(userId)
-      userRow = userQueries.findById.get(userId)
-    }
-
-    const save = saveQueries.findByUserId.get(userRow.id)
     const user = {
-      id: userRow.id,
-      username: userRow.username,
-      email: userRow.email,
-      role: userRow.role,
+      id: -1,
+      username: 'Guest Mayor',
+      email: 'guest@tampere.fi',
+      role: 'Guest Mayor',
+      isGuest: true,
     }
 
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' })
+    // Always start fresh at Step 1 (CHARACTER_SELECT)
+    const save = {
+      id: -1,
+      user_id: -1,
+      character_id: null,
+      game_stage: 'CHARACTER_SELECT',
+      level: 1,
+      money: 50000000,
+      xp: 25,
+      xp_needed: 70,
+      permit_approved: 0,
+      permit_approved_at: null,
+      story_dialog_seen: 0,
+      unlocked_impacts: '[]',
+      playtime_seconds: 0,
+      updated_at: new Date().toISOString(),
+    }
+
+    const token = jwt.sign(user, JWT_SECRET, { expiresIn: '6h' })
     res.json({ token, user, save })
   } catch (err) {
     console.error('Guest login error:', err)
@@ -159,6 +165,33 @@ app.post('/api/auth/guest', (req, res) => {
 // 5. Get Current User Profile
 app.get('/api/auth/me', authenticate, (req, res) => {
   try {
+    if (req.user.isGuest || req.user.id === -1) {
+      const user = {
+        id: -1,
+        username: 'Guest Mayor',
+        email: 'guest@tampere.fi',
+        role: 'Guest Mayor',
+        isGuest: true,
+      }
+      const save = {
+        id: -1,
+        user_id: -1,
+        character_id: null,
+        game_stage: 'CHARACTER_SELECT',
+        level: 1,
+        money: 50000000,
+        xp: 25,
+        xp_needed: 70,
+        permit_approved: 0,
+        permit_approved_at: null,
+        story_dialog_seen: 0,
+        unlocked_impacts: '[]',
+        playtime_seconds: 0,
+        updated_at: new Date().toISOString(),
+      }
+      return res.json({ user, save })
+    }
+
     const user = userQueries.findById.get(req.user.id)
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
@@ -173,6 +206,27 @@ app.get('/api/auth/me', authenticate, (req, res) => {
 // 6. Get Game Save
 app.get('/api/game/save', authenticate, (req, res) => {
   try {
+    if (req.user.isGuest || req.user.id === -1) {
+      return res.json({
+        save: {
+          id: -1,
+          user_id: -1,
+          character_id: null,
+          game_stage: 'CHARACTER_SELECT',
+          level: 1,
+          money: 50000000,
+          xp: 25,
+          xp_needed: 70,
+          permit_approved: 0,
+          permit_approved_at: null,
+          story_dialog_seen: 0,
+          unlocked_impacts: '[]',
+          playtime_seconds: 0,
+          updated_at: new Date().toISOString(),
+        },
+      })
+    }
+
     let save = saveQueries.findByUserId.get(req.user.id)
     if (!save) {
       saveQueries.createInitialSave.run(req.user.id)
@@ -187,6 +241,13 @@ app.get('/api/game/save', authenticate, (req, res) => {
 // 7. Update Game Save (Auto-Save / Milestone Save)
 app.put('/api/game/save', authenticate, (req, res) => {
   try {
+    // Guest sessions are strictly ephemeral: never write to SQLite database
+    if (req.user.isGuest || req.user.id === -1) {
+      return res.json({
+        success: true,
+        message: 'Guest session is ephemeral. No changes saved to database.',
+      })
+    }
     const characterId = req.body.characterId ?? req.body.character_id
     const gameStage = req.body.gameStage ?? req.body.game_stage
     const level = req.body.level

@@ -7,6 +7,7 @@ export interface User {
   username: string;
   email: string;
   role: string;
+  isGuest?: boolean;
 }
 
 export interface GameSave {
@@ -29,13 +30,15 @@ export interface GameSave {
 export interface CharacterProfile {
   id: string;
   name: string;
-  age: number;
   title: string;
   avatar: string;
   bio: string;
   quote: string;
   color: string;
   tag: string;
+  isPlayable: boolean;
+  statusBadge: string;
+  learningFocus: string;
 }
 
 export type ImpactDimensionKey =

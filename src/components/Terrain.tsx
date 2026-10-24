@@ -460,7 +460,7 @@ export const Terrain: React.FC<{ onSelectLake?: () => void }> = ({ onSelectLake 
 
       {/* 3. Road Foundation Underbed */}
       <mesh geometry={roadGeometry} receiveShadow>
-        <meshStandardMaterial color="#1e293b" roughness={0.8} />
+        <meshStandardMaterial color="#515566" roughness={0.8} />
       </mesh>
     </group>
   )

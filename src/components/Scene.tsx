@@ -12,6 +12,7 @@ import { NasineulaTower } from './NasineulaTower'
 import { Carpark } from './Carpark'
 import { ModularRoads } from './ModularRoads'
 import { SolarFarm } from './SolarFarm'
+import { ExpansionZoneForest } from './ExpansionZoneForest'
 import { WorldBubbles, InspectedWorldObject } from './WorldBubbles'
 import { HouseInfo, InspectionTab } from '../types'
 
@@ -243,8 +244,9 @@ export const Scene: React.FC<SceneProps> = ({
           {/* 1b. Modular Kenney 3D Road Network */}
           <ModularRoads />
 
-          {/* 2. Forest Perimeter */}
+          {/* 2. Forest Perimeter & Dynamic Unbuilt Lot Trees */}
           <Forest />
+          <ExpansionZoneForest level={level} />
 
           {/* 3. Tampere Näsinneula Observation Tower (North-West) */}
           <NasineulaTower position={[-5.0, 0, -6.0]} />
@@ -284,8 +286,8 @@ export const Scene: React.FC<SceneProps> = ({
             />
           )}
 
-          {/* North-East Facility (Activated in Level 2 & 3) */}
-          {level >= 2 && (
+          {/* North-East Facility (Activated in Level 3 Peak) */}
+          {level >= 3 && (
             <DataCenter
               position={[16.0, 0, -11.5]}
               isSelected={dataCenterHovered || inspectedObject === 'datacenter'}

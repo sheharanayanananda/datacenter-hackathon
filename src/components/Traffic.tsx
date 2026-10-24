@@ -224,17 +224,17 @@ export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
     return new THREE.CatmullRomCurve3(pts, false, 'centripetal')
   }
 
-  // 2. Initial fleet of vehicles loaded from kenney_car-kit
   // 2. Initial fleet with staggered positions, varied driving styles and randomized timers
+  // Vehicles 0 and 1 start on the loop; all new vehicles (2..5) appear from the datacenter carpark stalls
   const vehiclesRef = useRef<VehicleRuntime[]>([
     // Active sports sedan cruising on loop (nimble & swift)
     {
       id: 'car-sports',
       modelType: 'sedan-sports',
       state: 'LOOPING',
-      progress: 0.08,
-      speed: 0.020,
-      minGap: 0.020,
+      progress: 0.1,
+      speed: 0.018,
+      minGap: 0.022,
       lapsCompleted: 0,
       targetLaps: 3,
       assignedStallIndex: null,
@@ -247,9 +247,9 @@ export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
       id: 'car-delivery',
       modelType: 'delivery',
       state: 'LOOPING',
-      progress: 0.42,
-      speed: 0.014,
-      minGap: 0.032,
+      progress: 0.6,
+      speed: 0.018,
+      minGap: 0.024,
       lapsCompleted: 0,
       targetLaps: 2,
       assignedStallIndex: null,
@@ -257,22 +257,22 @@ export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
       yieldTimer: 0,
       customCurve: null,
     },
-    // Active municipal police cruiser on loop (attentive patrol)
+    // Municipal police cruiser (Appears in Carpark West Stall 1 near datacenter)
     {
       id: 'car-police',
       modelType: 'police',
-      state: 'LOOPING',
-      progress: 0.72,
+      state: 'PARKED',
+      progress: 1.0,
       speed: 0.018,
       minGap: 0.024,
       lapsCompleted: 0,
       targetLaps: 4,
-      assignedStallIndex: null,
-      parkedTimer: 0,
+      assignedStallIndex: 0,
+      parkedTimer: 2.0,
       yieldTimer: 0,
       customCurve: null,
     },
-    // Parked in West Stall 1 (Yellow Taxi - departs first)
+    // Yellow Taxi (Appears in Carpark West Stall 2 near datacenter)
     {
       id: 'car-taxi',
       modelType: 'taxi',
@@ -282,27 +282,27 @@ export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
       minGap: 0.024,
       lapsCompleted: 0,
       targetLaps: 2,
-      assignedStallIndex: 0,
-      parkedTimer: 7.0,
+      assignedStallIndex: 1,
+      parkedTimer: 5.5,
       yieldTimer: 0,
       customCurve: null,
     },
-    // Parked in East Stall 1 (SUV - departs mid-way)
+    // SUV (Appears in Carpark East Stall 1 near datacenter)
     {
       id: 'car-suv',
       modelType: 'suv',
       state: 'PARKED',
       progress: 1.0,
-      speed: 0.015,
-      minGap: 0.028,
+      speed: 0.016,
+      minGap: 0.026,
       lapsCompleted: 0,
       targetLaps: 3,
       assignedStallIndex: 4,
-      parkedTimer: 25.0,
+      parkedTimer: 2.5,
       yieldTimer: 0,
       customCurve: null,
     },
-    // Parked in West Stall 2 (Sports Hatchback - departs later)
+    // Sports Hatchback (Appears in Carpark East Stall 2 near datacenter)
     {
       id: 'car-hatchback',
       modelType: 'hatchback-sports',
@@ -312,36 +312,125 @@ export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
       minGap: 0.022,
       lapsCompleted: 0,
       targetLaps: 2,
-      assignedStallIndex: 1,
-      parkedTimer: 45.0,
+      assignedStallIndex: 5,
+      parkedTimer: 6.0,
       yieldTimer: 0,
       customCurve: null,
     },
   ])
 
-  // Track stall occupancy
-  const occupiedStalls = useRef<Set<number>>(new Set([0, 1, 4]))
+  // Track stall occupancy: 0, 1, 4, 5 initially reserved for incoming datacenter fleet
+  const occupiedStalls = useRef<Set<number>>(new Set([0, 1, 4, 5]))
 
   // Mesh group refs for direct transform updates (optimal 60fps performance)
   const carGroupRefs = useRef<(THREE.Group | null)[]>([])
+
+  // Track level transitions to ensure new vehicles appear from carpark stalls
+  const prevLevelRef = useRef<number>(level)
+
+  React.useEffect(() => {
+    const prevLvl = prevLevelRef.current
+    prevLevelRef.current = level
+
+    if (level === 1) {
+      // Level 1: Reset the 2 vehicles to opposite sides so they loop continuously without stopping
+      const v0 = vehiclesRef.current[0]
+      v0.state = 'LOOPING'
+      v0.progress = 0.1
+      v0.speed = 0.018
+      v0.customCurve = null
+      v0.assignedStallIndex = null
+
+      const v1 = vehiclesRef.current[1]
+      v1.state = 'LOOPING'
+      v1.progress = 0.6
+      v1.speed = 0.018
+      v1.customCurve = null
+      v1.assignedStallIndex = null
+
+      // Place inactive vehicles back in carpark stalls so they appear there next time
+      const carparkDefaults = [
+        { idx: 2, stall: 0, timer: 2.0 },
+        { idx: 3, stall: 1, timer: 5.5 },
+        { idx: 4, stall: 4, timer: 2.5 },
+        { idx: 5, stall: 5, timer: 6.0 },
+      ]
+      occupiedStalls.current = new Set([0, 1, 4, 5])
+      carparkDefaults.forEach(({ idx, stall, timer }) => {
+        const veh = vehiclesRef.current[idx]
+        if (veh) {
+          veh.state = 'PARKED'
+          veh.progress = 1.0
+          veh.assignedStallIndex = stall
+          veh.parkedTimer = timer
+          veh.customCurve = null
+          const group = carGroupRefs.current[idx]
+          if (group) {
+            const s = CARPARK_STALLS[stall]
+            group.position.set(s.worldPos[0], s.worldPos[1], s.worldPos[2])
+            group.rotation.set(0, s.rotation, 0)
+          }
+        }
+      })
+    } else if (level > prevLvl) {
+      // When new vehicles appear, they appear directly in the carpark stalls near the datacenter
+      const startIdx = prevLvl === 1 ? 2 : 4
+      const endIdx = level === 2 ? 4 : vehiclesRef.current.length
+      const stallSlots = [0, 1, 4, 5]
+
+      for (let i = startIdx; i < endIdx; i++) {
+        const veh = vehiclesRef.current[i]
+        const stallIndex = stallSlots[i - 2] ?? 0
+        occupiedStalls.current.add(stallIndex)
+        veh.state = 'PARKED'
+        veh.progress = 1.0
+        veh.assignedStallIndex = stallIndex
+        // Stagger exit time so they pull out smoothly into traffic
+        veh.parkedTimer = 1.5 + (i - startIdx) * 3.0
+        veh.customCurve = null
+
+        const stall = CARPARK_STALLS[stallIndex]
+        const group = carGroupRefs.current[i]
+        if (group) {
+          group.position.set(stall.worldPos[0], stall.worldPos[1], stall.worldPos[2])
+          group.rotation.set(0, stall.rotation, 0)
+        }
+      }
+    }
+  }, [level])
+
+  // Filter visible vehicle count based on Level (Level 1: 2, Level 2: 4, Level 3: all)
+  const vehicleLimit = level === 1 ? 2 : level === 2 ? 4 : vehiclesRef.current.length
 
   // Main animation frame loop with intelligent anti-collision and queueing
   useFrame((_, delta) => {
     // Clamp delta to prevent huge jumps on tab switch
     const dt = Math.min(delta, 0.1)
 
-    vehiclesRef.current.forEach((veh, index) => {
+    // Only process actively rendered vehicles for this level
+    const activeVehicles = vehiclesRef.current.slice(0, vehicleLimit)
+
+    activeVehicles.forEach((veh, index) => {
       const group = carGroupRefs.current[index]
       if (!group) return
+
+      // In Level 1, vehicles circle continuously on the road loop without parking
+      if (level === 1 && veh.state !== 'LOOPING') {
+        veh.state = 'LOOPING'
+        veh.progress = (index * 0.5) % 1.0
+        veh.speed = 0.018
+        veh.customCurve = null
+        veh.assignedStallIndex = null
+      }
 
       // --- STATE 1: LOOPING ---
       if (veh.state === 'LOOPING') {
         // 1. Adaptive Cruise Control on the loop with individual gap preferences
         let speedFactor = 1.0
 
-        for (let j = 0; j < vehiclesRef.current.length; j++) {
+        for (let j = 0; j < activeVehicles.length; j++) {
           if (j === index) continue
-          const other = vehiclesRef.current[j]
+          const other = activeVehicles[j]
           // Only follow active vehicles on the loop (parked and driveway cars do not impede the main thoroughfare)
           if (other.state === 'LOOPING') {
             let diff = (other.progress - veh.progress) % 1.0
@@ -350,7 +439,8 @@ export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
             const safetyBuffer = veh.minGap + 0.025
             if (diff < safetyBuffer && diff > 0.0001) {
               if (diff < veh.minGap) {
-                speedFactor = 0.0 // Full stop behind car ahead
+                // In Level 1, gently adjust speed to maintain spacing rather than a full dead-stop
+                speedFactor = level === 1 ? 0.75 : 0.0
               } else {
                 // Smooth deceleration buffer matching leader
                 speedFactor = Math.min(speedFactor, (diff - veh.minGap) / 0.025)
@@ -372,8 +462,8 @@ export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
           roadModifier = 0.85
         }
 
-        // Micro speed variation per car for organic, un-robotic flow
-        const organicNoise = 1.0 + Math.sin(index * 2.3 + veh.progress * 12.0) * 0.04
+        // Micro speed variation per car for organic flow
+        const organicNoise = 1.0 + Math.sin(index * 2.3 + veh.progress * 12.0) * 0.03
         const currentSpeed = veh.speed * roadModifier * organicNoise
 
         const prevProg = veh.progress
@@ -390,11 +480,12 @@ export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
           (prevProg < junctionProgress && veh.progress >= junctionProgress)
 
         // Only turn into carpark if driveway is clear of conflicting cars
-        const drivewayBusy = vehiclesRef.current.some(
+        const drivewayBusy = activeVehicles.some(
           (o) => o.id !== veh.id && (o.state === 'ENTERING_CARPARK' || o.state === 'EXITING_CARPARK')
         )
 
-        if (isNearJunction && veh.lapsCompleted >= veh.targetLaps && !drivewayBusy) {
+        // Vehicles only visit carpark in Level 2+
+        if (level > 1 && isNearJunction && veh.lapsCompleted >= veh.targetLaps && !drivewayBusy) {
           // Look for an open stall
           let freeStallIdx: number | null = null
           for (let s = 0; s < CARPARK_STALLS.length; s++) {
@@ -458,7 +549,7 @@ export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
         // Ready to leave stall and hit the road
         if (veh.parkedTimer <= 0 && veh.assignedStallIndex !== null) {
           // Check if driveway is clear before pulling out
-          const drivewayBusy = vehiclesRef.current.some(
+          const drivewayBusy = activeVehicles.some(
             (o) => o.id !== veh.id && (o.state === 'ENTERING_CARPARK' || o.state === 'EXITING_CARPARK')
           )
           if (!drivewayBusy) {
@@ -477,7 +568,7 @@ export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
         let yieldToLoopTraffic = false
 
         if (approachingJunction) {
-          yieldToLoopTraffic = vehiclesRef.current.some((other) => {
+          yieldToLoopTraffic = activeVehicles.some((other) => {
             if (other.state !== 'LOOPING') return false
             let distToJunction = (junctionProgress - other.progress) % 1.0
             if (distToJunction < 0) distToJunction += 1.0
@@ -515,9 +606,6 @@ export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
       }
     })
   })
-
-  // Filter visible vehicle count based on Level (Level 1: 2, Level 2: 4, Level 3: all)
-  const vehicleLimit = level === 1 ? 2 : level === 2 ? 4 : vehiclesRef.current.length
 
   return (
     <group>

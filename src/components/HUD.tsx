@@ -13,10 +13,8 @@ import {
   Move,
   RotateCcw,
   Compass,
-  BarChart3,
   ChevronsUp,
   Building2,
-  Award,
   User,
   Leaf,
 } from 'lucide-react'
@@ -59,7 +57,123 @@ export const HUD: React.FC<HUDProps> = ({
   } = useGame()
 
   const currentLevelStats = LEVEL_STATS[level]
-  const xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100))
+
+  const getGlanceStats = (lvl: DataCenterLevel) => {
+    switch (lvl) {
+      case 1:
+        return {
+          energy: '5 MW',
+          heat: '4.5 MW',
+          jobs: '20',
+          traffic: '5/wk',
+          land: 'Lot 1',
+          water: '500k L',
+          tax: '€200k',
+        }
+      case 2:
+        return {
+          energy: '37.5 MW',
+          heat: '28 MW',
+          jobs: '55',
+          traffic: '1-3/d',
+          land: 'Zoned',
+          water: '4M L',
+          tax: '€1.5M',
+        }
+      case 3:
+      default:
+        return {
+          energy: '120 MW',
+          heat: '90 MW',
+          jobs: '250',
+          traffic: 'Daily',
+          land: 'Campus',
+          water: '20M L',
+          tax: '€10M',
+        }
+    }
+  }
+
+  const glance = getGlanceStats(level)
+
+  const glanceItems: {
+    key: ImpactDimensionKey;
+    label: string;
+    value: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badgeBg: string;
+    badgeText: string;
+    borderHover: string;
+  }[] = [
+    {
+      key: 'energy',
+      label: 'Energy',
+      value: glance.energy,
+      icon: Zap,
+      badgeBg: 'bg-amber-100',
+      badgeText: 'text-amber-600',
+      borderHover: 'hover:border-amber-300 hover:border-b-amber-400 hover:bg-amber-50/50',
+    },
+    {
+      key: 'surroundings',
+      label: 'Heat',
+      value: glance.heat,
+      icon: Flame,
+      badgeBg: 'bg-orange-100',
+      badgeText: 'text-orange-600',
+      borderHover: 'hover:border-orange-300 hover:border-b-orange-400 hover:bg-orange-50/50',
+    },
+    {
+      key: 'jobs',
+      label: 'Jobs',
+      value: glance.jobs,
+      icon: Users,
+      badgeBg: 'bg-sky-100',
+      badgeText: 'text-sky-600',
+      borderHover: 'hover:border-sky-300 hover:border-b-sky-400 hover:bg-sky-50/50',
+    },
+    {
+      key: 'transport',
+      label: 'Traffic',
+      value: glance.traffic,
+      icon: Truck,
+      badgeBg: 'bg-purple-100',
+      badgeText: 'text-purple-600',
+      borderHover: 'hover:border-purple-300 hover:border-b-purple-400 hover:bg-purple-50/50',
+    },
+    {
+      key: 'land_use',
+      label: 'Forest',
+      value: glance.land,
+      icon: Trees,
+      badgeBg: 'bg-emerald-100',
+      badgeText: 'text-emerald-600',
+      borderHover: 'hover:border-emerald-300 hover:border-b-emerald-400 hover:bg-emerald-50/50',
+    },
+    {
+      key: 'safety',
+      label: 'Water',
+      value: glance.water,
+      icon: ShieldCheck,
+      badgeBg: 'bg-rose-100',
+      badgeText: 'text-rose-600',
+      borderHover: 'hover:border-rose-300 hover:border-b-rose-400 hover:bg-rose-50/50',
+    },
+    {
+      key: 'future',
+      label: 'Taxes',
+      value: glance.tax,
+      icon: TrendingUp,
+      badgeBg: 'bg-teal-100',
+      badgeText: 'text-teal-600',
+      borderHover: 'hover:border-teal-300 hover:border-b-teal-400 hover:bg-teal-50/50',
+    },
+  ]
+
+  const openEffect = (key: ImpactDimensionKey) => {
+    setActiveImpactKey(key)
+    setIsSevenImpactsOpen(true)
+  }
 
   return (
     <div className="fixed inset-0 pointer-events-none flex flex-col justify-between p-3 sm:p-5 z-20">
@@ -74,7 +188,7 @@ export const HUD: React.FC<HUDProps> = ({
             </div>
             <div>
               <h1 className="text-xs sm:text-sm font-black tracking-wide text-slate-900 uppercase flex items-center gap-1.5">
-                Nordic EcoTown <span className="bg-emerald-100 text-emerald-800 text-[9px] px-2 py-0.5 rounded-full font-bold">Tampere</span>
+                Datacenter Simulator <span className="bg-emerald-100 text-emerald-800 text-[9px] px-2 py-0.5 rounded-full font-bold">Tampere</span>
               </h1>
               <p className="text-[10px] text-slate-500 font-semibold hidden sm:block">
                 Zero-Emission Data Center & Heat Grid
@@ -82,27 +196,27 @@ export const HUD: React.FC<HUDProps> = ({
             </div>
           </div>
 
-          {/* User & Character Profile Pill */}
+          {/* User Profile Pill */}
           {user && (
             <div className="bg-white/95 rounded-2xl border-2 border-white shadow-lg px-3 py-1.5 flex items-center gap-2 text-xs">
               <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                {character?.avatar === 'Leaf' ? (
-                  <Leaf className="w-3.5 h-3.5 text-emerald-600" />
-                ) : character?.avatar === 'Zap' ? (
-                  <Zap className="w-3.5 h-3.5 text-sky-600" />
+                {character?.avatar === 'Sparkles' ? (
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                ) : character?.avatar === 'Building2' ? (
+                  <Building2 className="w-3.5 h-3.5 text-sky-600" />
                 ) : (
                   <Trees className="w-3.5 h-3.5 text-amber-600" />
                 )}
               </div>
               <div className="leading-tight">
                 <div className="text-[11px] font-black text-slate-900 flex items-center gap-1.5">
-                  <span>{character?.name.split(' ')[0] || user.username}</span>
+                  <span>{character?.name || 'Young'} Track</span>
                   <span className="text-[9px] font-extrabold text-white bg-emerald-600 px-1.5 py-0.2 rounded-md">
                     Level {level} {level === 3 ? '(Peak)' : ''}
                   </span>
                 </div>
                 <div className="text-[9px] text-slate-500 font-medium hidden md:block">
-                  {user.role}
+                  {user.username}
                 </div>
               </div>
 
@@ -118,7 +232,7 @@ export const HUD: React.FC<HUDProps> = ({
           )}
         </div>
 
-        {/* Center / Right: Judge Demo Switcher & Camera Controls */}
+        {/* Right: Judge Demo Switcher & Camera Controls */}
         <div className="pointer-events-auto flex items-center gap-1.5 bg-white/95 p-1.5 rounded-2xl border-2 border-white shadow-lg text-xs">
           {/* Quick Demo Tier Switcher for Hackathon Judges */}
           <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-xl border border-amber-200">
@@ -176,113 +290,59 @@ export const HUD: React.FC<HUDProps> = ({
         </div>
       </div>
 
-      {/* Middle Banner: 7 Effects Strip */}
-      <div className="pointer-events-auto self-center bg-white/95 px-3 py-1.5 rounded-2xl border-2 border-white shadow-xl flex items-center gap-1.5 overflow-x-auto max-w-full">
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 pr-1.5 border-r border-slate-200 hidden sm:inline">
-          7 Effects:
-        </span>
-        {IMPACT_DIMENSIONS.map((dim) => {
-          const IconComponent =
-            dim.iconName === 'Zap'
-              ? Zap
-              : dim.iconName === 'Flame'
-              ? Flame
-              : dim.iconName === 'Users'
-              ? Users
-              : dim.iconName === 'Truck'
-              ? Truck
-              : dim.iconName === 'Trees'
-              ? Trees
-              : dim.iconName === 'ShieldCheck'
-              ? ShieldCheck
-              : TrendingUp
-
-          return (
-            <button
-              key={dim.key}
-              onClick={() => {
-                setActiveImpactKey(dim.key)
-                setIsSevenImpactsOpen(true)
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-extrabold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
-              title={`Inspect ${dim.title}`}
-            >
-              <IconComponent className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{dim.title.split(' ')[0]}</span>
-            </button>
-          )
-        })}
-      </div>
+      {/* Middle Screen is completely clean & unobstructed */}
 
       {/* Bottom HUD Layer */}
-      <div className="flex items-end justify-between w-full">
-        {/* Bottom-Left Simulation Stats */}
-        <div className="pointer-events-auto flex flex-col gap-2">
-          {/* Money Pill */}
-          <div className="flex items-center bg-[#fffbeb] border-2 border-[#fef08a] px-3.5 py-1.5 rounded-2xl shadow-game-button w-fit">
-            <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-sm mr-2">
+      <div className="flex items-end justify-between w-full gap-3">
+        {/* Bottom-Left Simulation Stats & 7 Glance Widgets */}
+        <div className="pointer-events-auto flex flex-col gap-2.5 min-w-0 max-w-[calc(100vw-170px)]">
+          {/* Money Pill - Duolingo Treasury Badge */}
+          <div className="flex items-center bg-[#fffbeb] border-2 border-[#fcd34d] border-b-4 rounded-2xl px-3.5 py-1.5 w-fit gap-2.5 shadow-sm transition-all select-none">
+            <div className="w-7 h-7 rounded-xl bg-amber-400 text-amber-950 flex items-center justify-center font-black text-xs shadow-xs">
               <DollarSign className="w-4 h-4 stroke-[3]" />
             </div>
-            <span className="font-black text-slate-800 text-base sm:text-lg tracking-wide">
-              {Math.round(money).toLocaleString()}
-            </span>
+            <div className="flex flex-col text-left leading-none">
+              <span className="font-black text-slate-900 text-sm sm:text-base tracking-tight">
+                € {Math.round(money).toLocaleString()}
+              </span>
+              <span className="text-[9px] font-extrabold text-amber-700 uppercase tracking-wider mt-0.5">
+                City Treasury
+              </span>
+            </div>
           </div>
 
-          {/* Level Progress Bar & Active Info */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center bg-white/95 border-2 border-white px-3 py-1.5 rounded-2xl shadow-game-button">
-              <div className="w-6 h-6 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center font-black text-xs mr-2 shadow-sm">
-                <Building2 className="w-3.5 h-3.5 text-amber-950" />
-              </div>
-              <div className="w-20 md:w-28 mr-2">
-                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-200">
+          {/* 7 Clickable Glance Widgets in ONE Single Row - Duolingo 3D Button Style */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
+            {glanceItems.map((item) => {
+              const IconComp = item.icon
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => openEffect(item.key)}
+                  className={`bg-white border-2 border-slate-200 border-b-4 ${item.borderHover} active:border-b-2 active:translate-y-[2px] rounded-2xl px-3 py-1.5 flex items-center gap-2.5 cursor-pointer transition-all shrink-0 whitespace-nowrap text-left group select-none shadow-sm`}
+                  title={`Click to view ${item.label} details`}
+                >
                   <div
-                    className="bg-gradient-to-r from-emerald-500 to-lime-400 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${xpPercent}%` }}
-                  />
-                </div>
-              </div>
-              <span className="text-[11px] font-black text-slate-800 whitespace-nowrap">
-                {currentLevelStats.powerCapacityMw} MW
-              </span>
-            </div>
-
-            {/* Waste Heat Indicator */}
-            <div
-              onClick={() => {
-                setActiveImpactKey('surroundings')
-                setIsSevenImpactsOpen(true)
-              }}
-              title="Click to inspect district heating export"
-              className="flex items-center bg-white/95 border-2 border-orange-200 px-3 py-1.5 rounded-2xl shadow-game-button cursor-pointer hover:border-orange-400 transition-colors"
-            >
-              <Flame className="w-4 h-4 text-orange-500 fill-orange-500 mr-1.5" />
-              <span className="text-[11px] font-black text-orange-950 whitespace-nowrap">
-                {currentLevelStats.wasteHeatMw} Heat
-              </span>
-            </div>
+                    className={`w-8 h-8 rounded-xl ${item.badgeBg} ${item.badgeText} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-150 shadow-xs`}
+                  >
+                    <IconComp className="w-4 h-4 stroke-[2.5]" />
+                  </div>
+                  <div className="flex flex-col text-left leading-none">
+                    <span className="text-xs sm:text-[13px] font-black text-slate-800 tracking-tight">
+                      {item.value}
+                    </span>
+                    <span className="text-[10px] font-extrabold text-slate-400 group-hover:text-slate-600 uppercase tracking-wider mt-1">
+                      {item.label}
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        {/* Bottom-Right Upgrade & Build Buttons */}
-        <div className="pointer-events-auto flex items-center gap-3">
-          {/* 7 Impacts Dashboard Button */}
-          <button
-            onClick={() => {
-              setActiveImpactKey('energy')
-              setIsSevenImpactsOpen(true)
-            }}
-            className="flex flex-col items-center justify-center bg-sky-500 hover:bg-sky-400 border-b-4 border-sky-700 active:border-b-0 active:translate-y-1 px-4 py-2.5 rounded-2xl shadow-game-button transition-all group cursor-pointer text-white"
-          >
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
-              <BarChart3 className="w-4 h-4 stroke-[2.5]" />
-            </div>
-            <span className="font-black text-xs tracking-wider uppercase">
-              7 EFFECTS
-            </span>
-          </button>
-
-          {/* Level UPGRADE Button */}
+        {/* Bottom-Right Upgrade Button */}
+        <div className="pointer-events-auto shrink-0 mb-0.5">
           <button
             onClick={() => setIsUpgradeModalOpen(true)}
             className={`flex flex-col items-center justify-center border-b-4 active:border-b-0 active:translate-y-1 px-5 py-2.5 rounded-2xl shadow-game-button transition-all group cursor-pointer text-white ${

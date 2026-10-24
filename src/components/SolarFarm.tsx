@@ -30,7 +30,7 @@ export const SolarFarm: React.FC<{ level?: number; onSelectSolar?: () => void }>
   // Level 3: 6 rows (12 panels - peak)
   const rows = useMemo(() => {
     if (level === 1) return []
-    if (level === 2) return [-11.2, -9.4, -7.6]
+    if (level === 2) return [-13.0, -11.2, -9.4]
     return [-13.0, -11.2, -9.4, -7.6, -5.8, -4.0]
   }, [level])
 

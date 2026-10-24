@@ -91,6 +91,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       try {
         const { user: fetchedUser, save: fetchedSave } = await api.auth.getMe()
+        // If a stale guest token exists from previous runs, clear it out so guests always start fresh
+        if (fetchedUser.isGuest || fetchedUser.username === 'guest_mayor') {
+          api.auth.signOut()
+          setUser(null)
+          return
+        }
         setUser(fetchedUser)
         applySaveData(fetchedSave)
       } catch (err) {
@@ -118,9 +124,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearInterval(timer)
   }, [user, gameStage, level])
 
-  // Auto-save heartbeat to SQLite every 10 seconds
+  // Auto-save heartbeat to SQLite every 10 seconds (only for authenticated registered users)
   useEffect(() => {
-    if (!user) return
+    if (!user || user.isGuest) return
 
     const interval = setInterval(async () => {
       try {
@@ -152,9 +158,39 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const signInAsGuest = async () => {
-    const data = await api.auth.guest()
-    setUser(data.user)
-    applySaveData(data.save)
+    // Ephemeral initial save always starts at Step 1: CHARACTER_SELECT
+    const guestInitialSave: GameSave = {
+      id: -1,
+      user_id: -1,
+      character_id: null,
+      game_stage: 'CHARACTER_SELECT',
+      level: 1,
+      money: 50000000,
+      xp: 25,
+      xp_needed: 70,
+      permit_approved: 0,
+      permit_approved_at: null,
+      story_dialog_seen: 0,
+      unlocked_impacts: '[]',
+      playtime_seconds: 0,
+      updated_at: new Date().toISOString(),
+    }
+
+    try {
+      const data = await api.auth.guest()
+      setUser({ ...data.user, isGuest: true })
+      applySaveData(guestInitialSave)
+    } catch (err) {
+      console.warn('Guest login fallback to in-memory mode:', err)
+      setUser({
+        id: -1,
+        username: 'Guest Mayor',
+        email: 'guest@tampere.fi',
+        role: 'Guest Mayor',
+        isGuest: true,
+      })
+      applySaveData(guestInitialSave)
+    }
   }
 
   const signOut = () => {
@@ -168,6 +204,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetGame = async () => {
     if (!user) return
+    if (user.isGuest) {
+      setLevel(1)
+      setMoney(50000000)
+      setXp(25)
+      setGameStage('CHARACTER_SELECT')
+      setCharacter(null)
+      return
+    }
     const { save: resetSave } = await api.game.resetSave()
     applySaveData(resetSave)
   }
@@ -178,14 +222,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCharacter(foundChar)
     setGameStage('PERMIT_STAMP')
 
-    try {
-      const { save: updated } = await api.game.updateSave({
-        character_id: charId,
-        game_stage: 'PERMIT_STAMP',
-      })
-      setSave(updated)
-    } catch (err) {
-      console.error('Failed to save character selection:', err)
+    if (!user?.isGuest) {
+      try {
+        const { save: updated } = await api.game.updateSave({
+          character_id: charId,
+          game_stage: 'PERMIT_STAMP',
+        })
+        setSave(updated)
+      } catch (err) {
+        console.error('Failed to save character selection:', err)
+      }
     }
   }
 
@@ -193,15 +239,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const timestamp = new Date().toISOString()
     setGameStage('CONSTRUCTION_STORY')
 
-    try {
-      const { save: updated } = await api.game.updateSave({
-        permit_approved: 1,
-        permit_approved_at: timestamp,
-        game_stage: 'CONSTRUCTION_STORY',
-      })
-      setSave(updated)
-    } catch (err) {
-      console.error('Failed to save permit signing:', err)
+    if (!user?.isGuest) {
+      try {
+        const { save: updated } = await api.game.updateSave({
+          permit_approved: 1,
+          permit_approved_at: timestamp,
+          game_stage: 'CONSTRUCTION_STORY',
+        })
+        setSave(updated)
+      } catch (err) {
+        console.error('Failed to save permit signing:', err)
+      }
     }
   }
 
@@ -209,15 +257,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setGameStage('SIMULATION')
     setLevel(1)
 
-    try {
-      const { save: updated } = await api.game.updateSave({
-        story_dialog_seen: 1,
-        game_stage: 'SIMULATION',
-        level: 1,
-      })
-      setSave(updated)
-    } catch (err) {
-      console.error('Failed to complete construction story:', err)
+    if (!user?.isGuest) {
+      try {
+        const { save: updated } = await api.game.updateSave({
+          story_dialog_seen: 1,
+          game_stage: 'SIMULATION',
+          level: 1,
+        })
+        setSave(updated)
+      } catch (err) {
+        console.error('Failed to complete construction story:', err)
+      }
     }
   }
 
@@ -227,14 +277,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setMoney((prev) => Math.max(0, prev - cost))
     setXp((prev) => Math.min(xpNeeded, prev + 25))
 
-    try {
-      const { save: updated } = await api.game.updateSave({
-        level: targetLevel,
-        money: Math.max(0, moneyRef.current - cost),
-      })
-      setSave(updated)
-    } catch (err) {
-      console.error('Failed to save level upgrade:', err)
+    if (!user?.isGuest) {
+      try {
+        const { save: updated } = await api.game.updateSave({
+          level: targetLevel,
+          money: Math.max(0, moneyRef.current - cost),
+        })
+        setSave(updated)
+      } catch (err) {
+        console.error('Failed to save level upgrade:', err)
+      }
     }
   }
 
