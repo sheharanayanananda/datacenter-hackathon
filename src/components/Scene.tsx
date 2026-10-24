@@ -8,11 +8,11 @@ import { WindTurbines } from './WindTurbines'
 import { NordicHouses } from './NordicHouses'
 import { Forest } from './Forest'
 import { Traffic } from './Traffic'
-import { DataCenterCard } from './DataCenterCard'
 import { NasineulaTower } from './NasineulaTower'
 import { Carpark } from './Carpark'
 import { ModularRoads } from './ModularRoads'
 import { SolarFarm } from './SolarFarm'
+import { WorldBubbles, InspectedWorldObject } from './WorldBubbles'
 import { HouseInfo, InspectionTab } from '../types'
 
 interface SceneProps {
@@ -157,6 +157,7 @@ export const Scene: React.FC<SceneProps> = ({
   const dirLightRef = useRef<THREE.DirectionalLight>(null)
   const lightTargetRef = useRef<THREE.Object3D>(new THREE.Object3D())
   const [spacePressed, setSpacePressed] = useState(false)
+  const [inspectedObject, setInspectedObject] = useState<InspectedWorldObject>('datacenter')
 
   // Hold Spacebar for temporary Pan mode
   useEffect(() => {
@@ -237,7 +238,7 @@ export const Scene: React.FC<SceneProps> = ({
 
         <Suspense fallback={null}>
           {/* 1. Base Terrain & Lake Näsijärvi */}
-          <Terrain />
+          <Terrain onSelectLake={() => setInspectedObject('lake')} />
 
           {/* 1b. Modular Kenney 3D Road Network */}
           <ModularRoads />
@@ -249,24 +250,27 @@ export const Scene: React.FC<SceneProps> = ({
           <NasineulaTower position={[-5.0, 0, -6.0]} />
 
           {/* 4. Power Generation Infrastructure (South-East Wind Turbines) */}
-          <WindTurbines level={level} />
+          <WindTurbines
+            level={level}
+            onSelectWind={() => setInspectedObject('wind')}
+          />
 
           {/* 5. Central Data Center Campus: Level 1 has 1 DC; Levels 2 & 3 have all 4 */}
           {/* South-West Facility (Primary lot, always active) */}
           <DataCenter
             position={[10.0, 0, -5.5]}
-            isSelected={dataCenterHovered}
+            isSelected={dataCenterHovered || inspectedObject === 'datacenter'}
             onHover={setDataCenterHovered}
-            onClick={() => onOpenDetails('overview')}
+            onClick={() => setInspectedObject('datacenter')}
           />
 
           {/* South-East Facility (Activated in Level 2 & 3) */}
           {level >= 2 && (
             <DataCenter
               position={[16.0, 0, -5.5]}
-              isSelected={dataCenterHovered}
+              isSelected={dataCenterHovered || inspectedObject === 'datacenter'}
               onHover={setDataCenterHovered}
-              onClick={() => onOpenDetails('overview')}
+              onClick={() => setInspectedObject('datacenter')}
             />
           )}
 
@@ -274,9 +278,9 @@ export const Scene: React.FC<SceneProps> = ({
           {level >= 2 && (
             <DataCenter
               position={[10.0, 0, -11.5]}
-              isSelected={dataCenterHovered}
+              isSelected={dataCenterHovered || inspectedObject === 'datacenter'}
               onHover={setDataCenterHovered}
-              onClick={() => onOpenDetails('overview')}
+              onClick={() => setInspectedObject('datacenter')}
             />
           )}
 
@@ -284,27 +288,38 @@ export const Scene: React.FC<SceneProps> = ({
           {level >= 2 && (
             <DataCenter
               position={[16.0, 0, -11.5]}
-              isSelected={dataCenterHovered}
+              isSelected={dataCenterHovered || inspectedObject === 'datacenter'}
               onHover={setDataCenterHovered}
-              onClick={() => onOpenDetails('overview')}
+              onClick={() => setInspectedObject('datacenter')}
             />
           )}
 
           {/* 5b. Dedicated Solar Microgrid Farm (Level 1: none, Level 2: some, Level 3: full) */}
-          <SolarFarm level={level} />
+          <SolarFarm
+            level={level}
+            onSelectSolar={() => setInspectedObject('solar')}
+          />
 
           {/* 6. Carpark (Attached East of Datacenter) */}
           <Carpark />
 
           {/* 7. Nordic Residential Houses (South-West Quadrant) */}
-          <NordicHouses onSelectHouse={onSelectHouse} />
+          <NordicHouses
+            onSelectHouse={(house) => {
+              onSelectHouse(house)
+              setInspectedObject('houses')
+            }}
+          />
 
           {/* 8. Animated Road Traffic (scaled by Level) */}
           <Traffic level={level} />
 
-          {/* 9. 3D Pinned Speech Bubble UI on Data Center */}
-          <DataCenterCard
-            onOpenDetails={onOpenDetails}
+          {/* 9. Interactive 3D World Bubbles for All Key Objects */}
+          <WorldBubbles
+            inspectedObject={inspectedObject}
+            onClose={() => setInspectedObject(null)}
+            onOpenSevenEffects={() => onOpenDetails('overview')}
+            level={level as any}
           />
         </Suspense>
 

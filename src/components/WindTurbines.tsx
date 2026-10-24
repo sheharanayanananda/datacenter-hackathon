@@ -58,7 +58,7 @@ const TurbineInstance: React.FC<TurbineInstanceProps> = ({
   )
 }
 
-export const WindTurbines: React.FC<{ level?: number }> = ({ level = 3 }) => {
+export const WindTurbines: React.FC<{ level?: number; onSelectWind?: () => void }> = ({ level = 3, onSelectWind }) => {
   const gltf = useGLTF(MODEL_PATH)
 
   // Dedicated pure white PBR material for the stand (tower pole & nacelle housing)
@@ -150,7 +150,12 @@ export const WindTurbines: React.FC<{ level?: number }> = ({ level = 3 }) => {
   if (!towerGeom || !rotorGeom || !rotorMaterial) return null
 
   return (
-    <group>
+    <group
+      onClick={(e) => {
+        e.stopPropagation()
+        onSelectWind?.()
+      }}
+    >
       {/* Wind Turbines in the South-East corner: Level 1 has 1, Level 2 has 2, Level 3 has 3 */}
       <TurbineInstance
         position={[11.0, 0, 9.5]}

@@ -5,7 +5,7 @@ import { useGLTF } from '@react-three/drei'
 
 useGLTF.preload('/assets/models/water/low_poly_water.glb')
 
-export const Terrain: React.FC = () => {
+export const Terrain: React.FC<{ onSelectLake?: () => void }> = ({ onSelectLake }) => {
   const waterRef = useRef<THREE.Mesh>(null)
   const baseWaterPositions = useRef<Float32Array | null>(null)
   const waterGltf = useGLTF('/assets/models/water/low_poly_water.glb')
@@ -385,7 +385,13 @@ export const Terrain: React.FC = () => {
       </mesh>
 
       {/* 2. Lake Näsijärvi Deep Basin in the North-West */}
-      <group position={[-16.0, 0.002, -19.5]}>
+      <group
+        position={[-16.0, 0.002, -19.5]}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelectLake?.()
+        }}
+      >
         {/* Layer A: Natural 3D Sloping Sandy Beach & Embankment */}
         <mesh geometry={shoreGeom} receiveShadow>
           <meshStandardMaterial
