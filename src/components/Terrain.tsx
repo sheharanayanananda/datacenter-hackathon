@@ -2,75 +2,8 @@ import React, { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 
-// Helper to determine if a point (x, z) is inside the random organic lake perimeter
-function isInsideLake(x: number, z: number, rx: number, rz: number, scale = 1.0): boolean {
-  const angle = Math.atan2(z, x)
-  // Multi-frequency harmonic wobble generating natural bays, peninsulas, and coves
-  const wobble =
-    1.0 +
-    Math.sin(angle * 2.0) * 0.22 +
-    Math.cos(angle * 3.0 + 1.2) * 0.18 +
-    Math.sin(angle * 5.0 - 0.7) * 0.12 +
-    Math.cos(angle * 7.0) * 0.08
-
-  const maxDist = Math.hypot(Math.cos(angle) * rx, Math.sin(angle) * rz) * wobble * scale
-  return Math.hypot(x, z) <= maxDist
-}
-
-// Generates a clean, low-poly triangulated mesh conforming to the organic lake perimeter
-function createLowPolyLakeGeom(rx: number, rz: number, scale = 1.0, step = 1.8): THREE.BufferGeometry {
-  const positions: number[] = []
-  const indices: number[] = []
-  const minX = -32
-  const maxX = 30
-  const minZ = -24
-  const maxZ = 25
-
-  const cols = Math.ceil((maxX - minX) / step)
-  const rows = Math.ceil((maxZ - minZ) / step)
-  const grid: number[][] = []
-  let vertIndex = 0
-
-  for (let r = 0; r <= rows; r++) {
-    grid[r] = []
-    const z = minZ + r * step
-    for (let c = 0; c <= cols; c++) {
-      const x = minX + c * step
-      if (isInsideLake(x, z, rx, rz, scale)) {
-        positions.push(x, 0, z)
-        grid[r][c] = vertIndex++
-      } else {
-        grid[r][c] = -1
-      }
-    }
-  }
-
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const v0 = grid[r][c]
-      const v1 = grid[r][c + 1]
-      const v2 = grid[r + 1][c]
-      const v3 = grid[r + 1][c + 1]
-
-      if (v0 !== -1 && v1 !== -1 && v2 !== -1) {
-        indices.push(v0, v1, v2)
-      }
-      if (v1 !== -1 && v3 !== -1 && v2 !== -1) {
-        indices.push(v1, v3, v2)
-      }
-    }
-  }
-
-  const geom = new THREE.BufferGeometry()
-  geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-  geom.setIndex(indices)
-  geom.computeVertexNormals()
-  return geom
-}
-
 export const Terrain: React.FC = () => {
-  const waterMeshRef = useRef<THREE.Mesh>(null)
-  const baseWaterPositions = useRef<Float32Array | null>(null)
+  const waterRef = useRef<THREE.Mesh>(null)
 
   // 1. Procedural Stylized Low-Poly Grass Canvas Texture (Calibrated to match House Bushes)
   const grassTexture = useMemo(() => {
@@ -164,49 +97,58 @@ export const Terrain: React.FC = () => {
     return texture
   }, [])
 
-  // 2. Large Random-Shape Low-Poly Lake Näsijärvi Geometries
-  // Lake dimensions: rx = 26.0, rz = 18.0 (Span: ~58 width x ~45 depth, larger than city!)
-  const { shoreGeom, waterGeom, bedGeom } = useMemo(() => {
-    const rx = 26.0
-    const rz = 18.0
-
-    const wGeom = createLowPolyLakeGeom(rx, rz, 1.0, 1.8)
-    // Cache original water vertex positions for wave displacement
-    baseWaterPositions.current = new Float32Array(wGeom.attributes.position.array)
-
-    return {
-      shoreGeom: createLowPolyLakeGeom(rx, rz, 1.08, 1.8), // Sandy shoreline transition
-      waterGeom: wGeom,                                    // Faceted low-poly water
-      bedGeom: createLowPolyLakeGeom(rx, rz, 0.82, 2.2),   // Deep submerged basin
+  // 2. Lake Näsijärvi Shapes (Organic shoreline and sparkling water surface)
+  const lakeShape = useMemo(() => {
+    const shape = new THREE.Shape()
+    const radiusX = 11.5
+    const radiusY = 7.5
+    const pointsCount = 48
+    for (let i = 0; i <= pointsCount; i++) {
+      const angle = (i / pointsCount) * Math.PI * 2
+      const wobble =
+        1.0 +
+        Math.sin(angle * 2) * 0.08 +
+        Math.sin(angle * 3) * 0.06 +
+        Math.cos(angle * 4 + 1.0) * 0.05 +
+        Math.sin(angle * 5) * 0.03
+      const x = Math.cos(angle) * radiusX * wobble
+      const y = Math.sin(angle) * radiusY * wobble
+      if (i === 0) shape.moveTo(x, y)
+      else shape.lineTo(x, y)
     }
+    return shape
   }, [])
 
-  // 3. Faceted Low-Poly Water Wave Undulation Animation
-  useFrame((state) => {
-    if (!waterMeshRef.current || !baseWaterPositions.current) return
-    const geom = waterMeshRef.current.geometry
-    const pos = geom.attributes.position
-    const base = baseWaterPositions.current
-    const time = state.clock.getElapsedTime() * 1.4
-
-    for (let i = 0; i < pos.count; i++) {
-      const idx = i * 3
-      const x = base[idx]
-      const z = base[idx + 2]
-
-      // Organic low-poly undulating waves
-      const wave =
-        Math.sin(x * 0.35 + time) * Math.cos(z * 0.35 + time * 0.85) * 0.11 +
-        Math.sin(x * 0.7 - time * 1.5) * 0.04
-
-      pos.setY(i, wave)
+  const shorelineShape = useMemo(() => {
+    const shape = new THREE.Shape()
+    const radiusX = 12.3
+    const radiusY = 8.2
+    const pointsCount = 48
+    for (let i = 0; i <= pointsCount; i++) {
+      const angle = (i / pointsCount) * Math.PI * 2
+      const wobble =
+        1.0 +
+        Math.sin(angle * 2) * 0.08 +
+        Math.sin(angle * 3) * 0.06 +
+        Math.cos(angle * 4 + 1.0) * 0.05 +
+        Math.sin(angle * 5) * 0.03
+      const x = Math.cos(angle) * radiusX * wobble
+      const y = Math.sin(angle) * radiusY * wobble
+      if (i === 0) shape.moveTo(x, y)
+      else shape.lineTo(x, y)
     }
+    return shape
+  }, [])
 
-    pos.needsUpdate = true
-    geom.computeVertexNormals()
+  // Gentle wave water undulation
+  useFrame((state) => {
+    if (waterRef.current) {
+      const time = state.clock.getElapsedTime()
+      waterRef.current.position.y = 0.006 + Math.sin(time * 1.5) * 0.002
+    }
   })
 
-  // 4. Road network matching the top-view schematic
+  // 3. Road network foundation matching the top-view schematic
   const roadGeometry = useMemo(() => {
     const roadWidth = 1.05
     const halfW = roadWidth / 2
@@ -260,6 +202,10 @@ export const Terrain: React.FC = () => {
     // 3. Residential South Avenue
     addSegment(-7.0, 0.5, -7.0, 11.5)
 
+    // 4. L-Shaped Connector Avenue
+    addSegment(-15.0, 4.5, -15.0, 11.5)
+    addSegment(-15.0, 11.5, -7.0, 11.5)
+
     const geom = new THREE.BufferGeometry()
     geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
     geom.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
@@ -282,43 +228,40 @@ export const Terrain: React.FC = () => {
         />
       </mesh>
 
-      {/* 2. Expansive Random-Shape Low-Poly Lake Näsijärvi (North-West, spanning larger than city) */}
-      <group position={[-15.0, 0.002, -28.0]}>
-        {/* Layer A: Smooth Low-Poly Sandy Shoreline Transition (Grass -> Beach) */}
-        <mesh geometry={shoreGeom} position={[0, 0.002, 0]} receiveShadow>
-          <meshStandardMaterial
-            color="#ebd59b" // Soft warm golden sand
-            roughness={0.88}
-            metalness={0.02}
-            flatShading
-          />
+      {/* 2. Lake Näsijärvi in the North-West (with clear lawn buffer from solar panels and Näsinneula tower) */}
+      <group position={[-13.5, 0.002, -17.5]}>
+        {/* Sandy / Pebble Shoreline Transition Rim */}
+        <mesh position={[0, 0.003, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <shapeGeometry args={[shorelineShape]} />
+          <meshStandardMaterial color="#c2b280" roughness={0.92} />
         </mesh>
 
-        {/* Layer B: Deep Submerged Lakebed Basin (Providing realistic depth) */}
-        <mesh geometry={bedGeom} position={[0, -0.32, 0]}>
-          <meshStandardMaterial
-            color="#0284c7" // Deep Nordic blue underwater basin
-            roughness={0.92}
-            metalness={0.05}
-            flatShading
-          />
-        </mesh>
-
-        {/* Layer C: Animated Faceted Low-Poly Water Surface */}
+        {/* Lake Water Surface with Stylized Sparkling Cerulean Translucency */}
         <mesh
-          ref={waterMeshRef}
-          geometry={waterGeom}
-          position={[0, 0.008, 0]}
-          receiveShadow
+          ref={waterRef}
+          position={[0, 0.006, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
         >
+          <shapeGeometry args={[lakeShape]} />
           <meshStandardMaterial
-            color="#38bdf8" // Vibrant sparkling clear cerulean water
+            color="#38bdf8"
             roughness={0.12}
             metalness={0.25}
-            flatShading
             transparent
-            opacity={0.86}
+            opacity={0.88}
           />
+        </mesh>
+
+        {/* Scenic Archipelago Islet 1 */}
+        <mesh position={[-3.5, 0.03, 1.2]} receiveShadow castShadow>
+          <cylinderGeometry args={[0.9, 1.3, 0.06, 7]} />
+          <meshStandardMaterial color="#44934c" roughness={0.85} flatShading />
+        </mesh>
+
+        {/* Scenic Archipelago Islet 2 */}
+        <mesh position={[2.0, 0.03, -1.8]} receiveShadow castShadow>
+          <cylinderGeometry args={[0.7, 1.1, 0.06, 6]} />
+          <meshStandardMaterial color="#44934c" roughness={0.85} flatShading />
         </mesh>
       </group>
 

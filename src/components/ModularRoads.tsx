@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef, useEffect } from 'react'
 import * as THREE from 'three'
 import { useGLTF } from '@react-three/drei'
 
@@ -7,7 +7,6 @@ useGLTF.preload('/assets/models/roads/road-straight.glb')
 useGLTF.preload('/assets/models/roads/road-bend.glb')
 useGLTF.preload('/assets/models/roads/road-intersection.glb')
 useGLTF.preload('/assets/models/roads/road-crossroad.glb')
-useGLTF.preload('/assets/models/roads/road-end.glb')
 useGLTF.preload('/assets/models/roads/light-curved.glb')
 
 interface TileDef {
@@ -33,19 +32,84 @@ const getMesh = (scene: THREE.Group): THREE.Mesh | null => {
   return found
 }
 
+// High-performance Instanced Mesh component (consolidates dozens of draw calls into 1)
+const InstancedGroup: React.FC<{
+  mesh: THREE.Mesh | null;
+  items: { x: number; z: number; rotation: number; scale?: number }[];
+  castShadow?: boolean;
+  receiveShadow?: boolean;
+}> = ({ mesh, items, castShadow = false, receiveShadow = false }) => {
+  const instancedRef = useRef<THREE.InstancedMesh>(null)
+
+  useEffect(() => {
+    if (!instancedRef.current || items.length === 0) return
+    const dummy = new THREE.Object3D()
+    items.forEach((item, i) => {
+      const s = item.scale ?? 1.0
+      dummy.position.set(item.x, 0.005, item.z)
+      dummy.rotation.set(0, item.rotation, 0)
+      dummy.scale.set(s, s, s)
+      dummy.updateMatrix()
+      instancedRef.current!.setMatrixAt(i, dummy.matrix)
+    })
+    instancedRef.current.instanceMatrix.needsUpdate = true
+  }, [items])
+
+  if (!mesh || items.length === 0) return null
+
+  return (
+    <instancedMesh
+      ref={instancedRef}
+      args={[mesh.geometry, mesh.material, items.length]}
+      castShadow={castShadow}
+      receiveShadow={receiveShadow}
+    />
+  )
+}
+
+// High-performance Instanced Street Light Bulbs (0 lighting shader overhead, crisp warm glow)
+const InstancedBulbs: React.FC<{ lights: LightDef[] }> = ({ lights }) => {
+  const instancedRef = useRef<THREE.InstancedMesh>(null)
+  const bulbGeom = useMemo(() => new THREE.SphereGeometry(0.038, 8, 8), [])
+  const bulbMat = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: '#fef3c7',
+      }),
+    []
+  )
+
+  useEffect(() => {
+    if (!instancedRef.current || lights.length === 0) return
+    const dummy = new THREE.Object3D()
+    lights.forEach((light, i) => {
+      // Offset of lamp bulb relative to pole base at scale 0.7
+      const offset = new THREE.Vector3(0, 0.64 * 0.7, -0.095 * 0.7).applyAxisAngle(
+        new THREE.Vector3(0, 1, 0),
+        light.rotation
+      )
+      dummy.position.set(light.x + offset.x, 0.005 + offset.y, light.z + offset.z)
+      dummy.scale.set(1, 1, 1)
+      dummy.updateMatrix()
+      instancedRef.current!.setMatrixAt(i, dummy.matrix)
+    })
+    instancedRef.current.instanceMatrix.needsUpdate = true
+  }, [lights])
+
+  return <instancedMesh ref={instancedRef} args={[bulbGeom, bulbMat, lights.length]} />
+}
+
 export const ModularRoads: React.FC = () => {
   const straightGLTF = useGLTF('/assets/models/roads/road-straight.glb')
   const bendGLTF = useGLTF('/assets/models/roads/road-bend.glb')
   const intersectionGLTF = useGLTF('/assets/models/roads/road-intersection.glb')
   const crossroadGLTF = useGLTF('/assets/models/roads/road-crossroad.glb')
-  const endGLTF = useGLTF('/assets/models/roads/road-end.glb')
   const lightGLTF = useGLTF('/assets/models/roads/light-curved.glb')
 
   const straightMesh = useMemo(() => getMesh(straightGLTF.scene), [straightGLTF])
   const bendMesh = useMemo(() => getMesh(bendGLTF.scene), [bendGLTF])
   const intersectionMesh = useMemo(() => getMesh(intersectionGLTF.scene), [intersectionGLTF])
   const crossroadMesh = useMemo(() => getMesh(crossroadGLTF.scene), [crossroadGLTF])
-  const endMesh = useMemo(() => getMesh(endGLTF.scene), [endGLTF])
   const lightMesh = useMemo(() => getMesh(lightGLTF.scene), [lightGLTF])
 
   // Road network encircling the 2x2 Datacenter campus cluster and residential quarter
@@ -128,6 +192,12 @@ export const ModularRoads: React.FC = () => {
     return tiles
   }, [])
 
+  // Partition tiles by type for efficient instancing
+  const straightTiles = useMemo(() => roadTiles.filter((t) => t.type === 'straight'), [roadTiles])
+  const bendTiles = useMemo(() => roadTiles.filter((t) => t.type === 'bend'), [roadTiles])
+  const intersectionTiles = useMemo(() => roadTiles.filter((t) => t.type === 'intersection'), [roadTiles])
+  const crossroadTiles = useMemo(() => roadTiles.filter((t) => t.type === 'crossroad'), [roadTiles])
+
   // Orderly street light placements along sidewalks facing INWARD over the roadway
   const streetLights = useMemo<LightDef[]>(() => [
     // 1. South Main Avenue (south sidewalk at z = 4.96, facing North [-Z] into road)
@@ -180,62 +250,24 @@ export const ModularRoads: React.FC = () => {
     { x: 5.54, z: -1.5, rotation: -Math.PI / 2 },
   ], [])
 
+  const streetlightInstances = useMemo(
+    () => streetLights.map((l) => ({ x: l.x, z: l.z, rotation: l.rotation, scale: 0.7 })),
+    [streetLights]
+  )
+
   return (
     <group>
-      {/* 3D Road Tiles */}
-      {roadTiles.map((tile, index) => {
-        let mesh: THREE.Mesh | null = null
-        switch (tile.type) {
-          case 'straight':
-            mesh = straightMesh
-            break
-          case 'bend':
-            mesh = bendMesh
-            break
-          case 'intersection':
-            mesh = intersectionMesh
-            break
-          case 'crossroad':
-            mesh = crossroadMesh
-            break
-          case 'end':
-            mesh = endMesh
-            break
-        }
+      {/* High-Performance Instanced Road Meshes (Consolidates 80+ meshes into 4 draw calls) */}
+      <InstancedGroup mesh={straightMesh} items={straightTiles} receiveShadow />
+      <InstancedGroup mesh={bendMesh} items={bendTiles} receiveShadow />
+      <InstancedGroup mesh={intersectionMesh} items={intersectionTiles} receiveShadow />
+      <InstancedGroup mesh={crossroadMesh} items={crossroadTiles} receiveShadow />
 
-        if (!mesh) return null
+      {/* High-Performance Instanced Streetlights (1 draw call for all 33 poles) */}
+      <InstancedGroup mesh={lightMesh} items={streetlightInstances} castShadow />
 
-        return (
-          <group
-            key={`road-${tile.x}-${tile.z}-${index}`}
-            position={[tile.x, 0.005, tile.z]}
-            rotation={[0, tile.rotation, 0]}
-          >
-            <primitive object={mesh.clone()} />
-          </group>
-        )
-      })}
-
-      {/* 3D Curved Sidewalk Street Lights */}
-      {lightMesh &&
-        streetLights.map((light, index) => (
-          <group
-            key={`light-${light.x}-${light.z}-${index}`}
-            position={[light.x, 0.005, light.z]}
-            rotation={[0, light.rotation, 0]}
-            scale={[0.7, 0.7, 0.7]}
-          >
-            <primitive object={lightMesh.clone()} />
-
-            {/* Warm Night Ambient Glow Point Light from Lamp Bulb */}
-            <pointLight
-              position={[0, 0.64, -0.095]}
-              intensity={0.4}
-              distance={3.2}
-              color="#fef3c7"
-            />
-          </group>
-        ))}
+      {/* High-Performance Instanced Glowing Bulbs (1 draw call, 0 lighting shader cost) */}
+      <InstancedBulbs lights={streetLights} />
     </group>
   )
 }

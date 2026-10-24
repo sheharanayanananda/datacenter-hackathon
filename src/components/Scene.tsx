@@ -31,13 +31,13 @@ const MapController: React.FC<{
   const { camera } = useThree()
   const keys = useRef<{ [key: string]: boolean }>({})
 
-  // Handle Recenter
+  // Handle Recenter to the default panoramic overview
   useEffect(() => {
     if (recenterTrigger > 0 && controlsRef.current) {
-      controlsRef.current.target.set(1.0, 0.4, 1.5)
-      camera.position.set(-16, 20, 16)
+      controlsRef.current.target.set(4.5, 0.5, -2.5)
+      camera.position.set(-16.2, 22.8, 37.2)
       if ('zoom' in camera) {
-        ;(camera as THREE.OrthographicCamera).zoom = 46
+        ;(camera as THREE.OrthographicCamera).zoom = 28.0
         camera.updateProjectionMatrix()
       }
       controlsRef.current.update()
@@ -144,8 +144,8 @@ export const Scene: React.FC<SceneProps> = ({
         shadows
         orthographic
         camera={{
-          position: [-16, 20, 16],
-          zoom: 46,
+          position: [-16.2, 22.8, 37.2],
+          zoom: 28.0,
           near: -500,
           far: 2000,
         }}
@@ -255,7 +255,7 @@ export const Scene: React.FC<SceneProps> = ({
           recenterTrigger={recenterTrigger}
         />
 
-        {/* Camera Orbit Constraints with generous tilt & zoom freedom */}
+        {/* Camera Orbit Constraints: Framed default overview with max zoomout boundary */}
         <OrbitControls
           ref={controlsRef}
           enableRotate={true}
@@ -264,11 +264,11 @@ export const Scene: React.FC<SceneProps> = ({
           screenSpacePanning={false}
           panSpeed={1.2}
           rotateSpeed={0.8}
-          minZoom={18}
-          maxZoom={120}
+          minZoom={28.0} // Tight max zoomout limit bringing the town up close and full-frame
+          maxZoom={90}   // Generous zoomin capability to inspect town details
           maxPolarAngle={Math.PI / 2.7}  // ~67 deg: generous low angle
           minPolarAngle={Math.PI / 8.0}  // ~22 deg: generous high aerial view
-          target={[1.0, 0.4, 1.5]}
+          target={[4.5, 0.5, -2.5]}
           dampingFactor={0.06}
           mouseButtons={{
             LEFT: isPanning ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE,
