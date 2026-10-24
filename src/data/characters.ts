@@ -23,8 +23,8 @@ export const CHARACTERS: CharacterProfile[] = [
     quote: 'Balanced infrastructure investment ensures 99.999% server uptime and sustainable community growth.',
     color: 'sky',
     tag: 'Technical Depth',
-    isPlayable: true,
-    statusBadge: 'Active Track',
+    isPlayable: false,
+    statusBadge: 'Coming Soon',
     learningFocus: 'Database transactions, power redundancy & enterprise economics',
   },
   {
@@ -36,8 +36,8 @@ export const CHARACTERS: CharacterProfile[] = [
     quote: 'Preserving our tranquil pine forests while welcoming modern zero-emission technology for future generations.',
     color: 'amber',
     tag: 'Community & Heritage',
-    isPlayable: true,
-    statusBadge: 'Active Track',
+    isPlayable: false,
+    statusBadge: 'Coming Soon',
     learningFocus: 'Ecological balance, water stewardship & community impacts',
   },
 ]

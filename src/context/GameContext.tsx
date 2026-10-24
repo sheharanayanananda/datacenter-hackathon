@@ -77,8 +77,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setXpNeeded(saveData.xp_needed)
 
     if (saveData.character_id) {
-      const foundChar = CHARACTERS.find((c) => c.id === saveData.character_id) || CHARACTERS[0]
-      setCharacter(foundChar)
+      const foundChar = CHARACTERS.find((c) => c.id === saveData.character_id)
+      if (foundChar && foundChar.isPlayable) {
+        setCharacter(foundChar)
+      } else {
+        // Fallback to active playable track if previously selected track is Coming Soon
+        const playableChar = CHARACTERS.find((c) => c.isPlayable) || CHARACTERS[0]
+        setCharacter(playableChar)
+      }
     } else {
       setCharacter(null)
     }
@@ -222,7 +228,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Progression Handlers
   const selectCharacter = async (charId: string) => {
-    const foundChar = CHARACTERS.find((c) => c.id === charId) || CHARACTERS[0]
+    const foundChar = CHARACTERS.find((c) => c.id === charId)
+    // Strictly prevent selecting Coming Soon tracks
+    if (!foundChar || !foundChar.isPlayable) return
+
     setCharacter(foundChar)
     setGameStage('PERMIT_STAMP')
 

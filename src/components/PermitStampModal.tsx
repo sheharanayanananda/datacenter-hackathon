@@ -72,32 +72,32 @@ export const PermitStampModal: React.FC = () => {
               <span className="font-medium text-slate-600 flex items-center gap-1.5 shrink-0">
                 Clean Energy Campus:
               </span>
-              <span className="text-slate-800 text-right">
-                45 MW server capacity, 4 wind turbines & 12,000 m² solar microgrid
+              <span className="text-slate-800 text-right font-medium">
+                5–120 MW capacity, 3 wind turbines & solar microgrid
               </span>
             </div>
             <div className="flex justify-between border-b border-slate-200/70 pb-1.5 gap-4">
               <span className="font-medium text-slate-600 flex items-center gap-1.5 shrink-0">
                 Citywide Heat Sharing:
               </span>
-              <span className="text-emerald-700 text-right">
-                32 MW thermal recovery piping into 8.5 km district heating network
+              <span className="text-emerald-700 text-right font-medium">
+                4.5–90 MW waste heat piped into city homes
               </span>
             </div>
             <div className="flex justify-between border-b border-slate-200/70 pb-1.5 gap-4">
               <span className="font-medium text-slate-600 flex items-center gap-1.5 shrink-0">
                 Natural Cold-Air Cooling:
               </span>
-              <span className="text-slate-800 text-right">
-                Target PUE ≤ 1.15 using sub-zero Finnish ambient air ~220 days/year
+              <span className="text-slate-800 text-right font-medium">
+                Free Arctic air cooling, 55 dB noise cap
               </span>
             </div>
             <div className="flex justify-between gap-4">
               <span className="font-medium text-slate-600 flex items-center gap-1.5 shrink-0">
-                Forest & Land Allocation:
+                Forest Preservation:
               </span>
-              <span className="text-slate-800 text-right">
-                18.5 acres (7.5 ha) pine forest preserved untouched; 3.2 acres cleared with 55 dB noise cap
+              <span className="text-slate-800 text-right font-medium">
+                18.5 acres (85%) pine forest kept untouched
               </span>
             </div>
           </div>
