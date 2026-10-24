@@ -19,7 +19,6 @@ const SingleCar: React.FC<CarProps> = ({ color, speed, offset, curve }) => {
     const nextPoint = curve.getPointAt((t + 0.01) % 1.0)
 
     carGroup.current.position.copy(point)
-    // Align car rotation with curve tangent
     carGroup.current.lookAt(nextPoint)
   })
 
@@ -31,7 +30,7 @@ const SingleCar: React.FC<CarProps> = ({ color, speed, offset, curve }) => {
         <meshStandardMaterial color={color} roughness={0.4} />
       </mesh>
 
-      {/* Cabin / Roof */}
+      {/* Cabin / Windows */}
       <mesh position={[0, 0.24, -0.05]} castShadow>
         <boxGeometry args={[0.28, 0.12, 0.38]} />
         <meshStandardMaterial color="#334155" roughness={0.2} />
@@ -71,27 +70,30 @@ const SingleCar: React.FC<CarProps> = ({ color, speed, offset, curve }) => {
 }
 
 export const Traffic: React.FC = () => {
-  // Road loop curve matching road surface
+  // Road loop circuit matching the new layout
   const loopCurve = useMemo(() => {
     const points = [
-      new THREE.Vector3(-2.8, 0.08, -2.2),
-      new THREE.Vector3(2.6, 0.08, -2.2),
-      new THREE.Vector3(3.2, 0.08, 0),
-      new THREE.Vector3(2.8, 0.08, 2.4),
-      new THREE.Vector3(-2.6, 0.08, 2.4),
-      new THREE.Vector3(-3.2, 0.08, 0),
+      new THREE.Vector3(3.0, 0.08, 0.5),
+      new THREE.Vector3(3.0, 0.08, -3.5),
+      new THREE.Vector3(10.0, 0.08, -3.5),
+      new THREE.Vector3(10.0, 0.08, 3.5),
+      new THREE.Vector3(0.0, 0.08, 3.5),
+      new THREE.Vector3(-6.0, 0.08, 3.5),
+      new THREE.Vector3(-6.0, 0.08, 7.5),
+      new THREE.Vector3(-6.0, 0.08, 3.5),
+      new THREE.Vector3(-6.0, 0.08, 0.5),
     ]
     return new THREE.CatmullRomCurve3(points, true, 'centripetal')
   }, [])
 
   return (
     <group>
-      {/* Red Car (matching image red car near back-left road) */}
-      <SingleCar color="#dc2626" speed={0.06} offset={0.1} curve={loopCurve} />
-      {/* Blue Wagon (matching image blue car near front right) */}
-      <SingleCar color="#2563eb" speed={0.055} offset={0.55} curve={loopCurve} />
-      {/* White Compact Car */}
-      <SingleCar color="#f8fafc" speed={0.065} offset={0.82} curve={loopCurve} />
+      {/* Red Sedan */}
+      <SingleCar color="#dc2626" speed={0.05} offset={0.05} curve={loopCurve} />
+      {/* Blue Wagon */}
+      <SingleCar color="#2563eb" speed={0.045} offset={0.4} curve={loopCurve} />
+      {/* White Delivery Van */}
+      <SingleCar color="#f8fafc" speed={0.052} offset={0.75} curve={loopCurve} />
     </group>
   )
 }

@@ -15,66 +15,72 @@ interface PipeBranch {
 export const DistrictHeatPipes: React.FC<PipeNetworkProps> = ({ active = true }) => {
   const pulseGroupRef = useRef<THREE.Group>(null)
 
-  // Define the pipe branches corresponding to the reference image
+  // Define pipe paths running from Datacenter (East) along roads to Residential neighborhood (West)
   const branches: PipeBranch[] = useMemo(() => {
     const rawPaths: [number, number, number][][] = [
-      // Branch 1: Out of Data Center left side -> curving around corner -> into yellow house (South-West)
+      // Main Trunk line: From Datacenter thermal tanks (x=3.8, z=0.5) along connector road to Residential crossway (x=-6.0, z=0.5)
       [
-        [-2.12, 0.45, 0.4],
-        [-2.4, 0.2, 0.4],
-        [-2.4, 0.12, 1.6],
-        [-3.2, 0.12, 2.3],
-        [-3.5, 0.12, 3.2],
-        [-3.6, 0.15, 3.7],
+        [3.8, 0.35, 0.5],
+        [1.5, 0.12, 0.5],
+        [-1.5, 0.12, 0.5],
+        [-4.0, 0.12, 0.5],
+        [-6.0, 0.12, 0.5],
       ],
-      // Branch 2: Front outlet -> running along South curb -> into Red house (South-Center)
+      // Branch 1: From crossway West into North-West residential houses
       [
-        [-0.3, 0.35, 1.72],
-        [-0.3, 0.12, 2.2],
-        [-1.0, 0.12, 2.6],
-        [-1.2, 0.15, 3.8],
+        [-6.0, 0.12, 0.5],
+        [-7.2, 0.12, 1.2],
+        [-8.8, 0.12, 1.6],
+        [-10.0, 0.15, 2.2],
       ],
-      // Branch 3: Front outlet right branch -> curving East -> into Red House (South-East)
+      // Branch 2: East branch from crossway into North-East residential houses
       [
-        [-0.3, 0.12, 2.2],
-        [1.8, 0.12, 2.4],
-        [2.8, 0.12, 2.2],
-        [3.8, 0.12, 1.9],
-        [4.2, 0.15, 2.1],
+        [-6.0, 0.12, 0.5],
+        [-4.8, 0.12, 1.4],
+        [-3.2, 0.12, 1.8],
+        [-1.6, 0.15, 1.8],
       ],
-      // Branch 4: East corner branch -> into Slate/Red House (East)
+      // Branch 3: South branch along South street into southern homes
       [
-        [2.8, 0.12, 2.2],
-        [3.5, 0.12, 0.8],
-        [4.8, 0.12, 0.4],
-        [5.3, 0.15, 0.3],
+        [-6.0, 0.12, 0.5],
+        [-6.0, 0.12, 2.0],
+        [-6.0, 0.12, 3.5],
+        [-6.0, 0.12, 5.0],
+        [-6.0, 0.15, 7.0],
       ],
-      // Branch 5: North-West branch towards upper residential house
+      // Branch 4: Southern lateral into South-West row of houses
       [
-        [-2.4, 0.12, 0.4],
-        [-2.6, 0.12, -1.0],
-        [-3.2, 0.12, -1.8],
-        [-3.5, 0.15, -2.2],
+        [-6.0, 0.12, 3.5],
+        [-7.4, 0.12, 4.4],
+        [-8.8, 0.12, 4.6],
+        [-10.0, 0.15, 4.6],
+      ],
+      // Branch 5: Southern lateral into South-East row of houses
+      [
+        [-6.0, 0.12, 3.5],
+        [-4.6, 0.12, 4.4],
+        [-3.0, 0.12, 4.6],
+        [-1.6, 0.15, 4.6],
       ],
     ]
 
     return rawPaths.map((points, idx) => {
       const vPoints = points.map((p) => new THREE.Vector3(...p))
       const curve = new THREE.CatmullRomCurve3(vPoints, false, 'catmullrom', 0.2)
-      const meshGeo = new THREE.TubeGeometry(curve, 40, 0.065, 8, false)
+      const meshGeo = new THREE.TubeGeometry(curve, 35, 0.065, 8, false)
       return {
         curve,
         meshGeo,
-        pulseSpeed: 0.25 + (idx % 3) * 0.05,
+        pulseSpeed: 0.22 + (idx % 3) * 0.05,
       }
     })
   }, [])
 
-  // Pulse particles that travel along each pipe
+  // Flowing pulses of heat energy
   const pulses = useMemo(() => {
     return branches.map((b, i) => ({
       branchIndex: i,
-      offset: (i * 0.22) % 1.0,
+      offset: (i * 0.25) % 1.0,
       speed: b.pulseSpeed,
     }))
   }, [branches])
@@ -113,7 +119,6 @@ export const DistrictHeatPipes: React.FC<PipeNetworkProps> = ({ active = true })
       const t = (time * p.speed + p.offset) % 1.0
       const pt = branch.curve.getPointAt(t)
       mesh.position.copy(pt)
-      // Pulse scale
       const s = 1.0 + Math.sin(time * 8 + idx) * 0.25
       mesh.scale.set(s, s, s)
     })
@@ -125,13 +130,11 @@ export const DistrictHeatPipes: React.FC<PipeNetworkProps> = ({ active = true })
       {branches.map((b, i) => (
         <group key={i}>
           <mesh geometry={b.meshGeo} material={pipeMaterial} castShadow />
-
-          {/* Joint collars along the pipe */}
-          {[0.25, 0.5, 0.75].map((tVal, j) => {
+          {[0.3, 0.7].map((tVal, j) => {
             const pos = b.curve.getPointAt(tVal)
             return (
               <mesh key={j} position={pos} material={pipeJointMaterial}>
-                <sphereGeometry args={[0.09, 8, 8]} />
+                <sphereGeometry args={[0.085, 8, 8]} />
               </mesh>
             )
           })}
@@ -148,12 +151,12 @@ export const DistrictHeatPipes: React.FC<PipeNetworkProps> = ({ active = true })
         ))}
       </group>
 
-      {/* Ambient orange district heating ground glow */}
+      {/* Ambient orange district heating ground glow along main avenues */}
       {active && (
         <>
-          <pointLight position={[-2.4, 0.6, 1.8]} color="#ea580c" intensity={1.8} distance={3.5} />
-          <pointLight position={[0.5, 0.6, 2.3]} color="#ea580c" intensity={1.8} distance={3.5} />
-          <pointLight position={[3.5, 0.6, 1.5]} color="#ea580c" intensity={1.5} distance={3.5} />
+          <pointLight position={[2.5, 0.5, 0.6]} color="#ea580c" intensity={1.8} distance={4} />
+          <pointLight position={[-2.0, 0.5, 0.6]} color="#ea580c" intensity={1.8} distance={4} />
+          <pointLight position={[-6.0, 0.5, 3.4]} color="#ea580c" intensity={1.8} distance={4} />
         </>
       )}
     </group>

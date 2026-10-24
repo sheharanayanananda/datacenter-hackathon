@@ -10,6 +10,9 @@ import { NordicHouses } from './NordicHouses'
 import { Forest } from './Forest'
 import { Traffic } from './Traffic'
 import { DataCenterCard } from './DataCenterCard'
+import { NasineulaTower } from './NasineulaTower'
+import { Carpark } from './Carpark'
+import { ModularRoads } from './ModularRoads'
 import { HouseInfo, InspectionTab } from '../types'
 
 interface SceneProps {
@@ -75,33 +78,43 @@ export const Scene: React.FC<SceneProps> = ({
         />
 
         <Suspense fallback={null}>
-          {/* 1. Base Terrain, Hills & Lake */}
+          {/* 1. Base Terrain & Lake Näsijärvi */}
           <Terrain />
 
-          {/* 2. Low-Poly Pine Forest Perimeter */}
+          {/* 1b. Modular Kenney 3D Road Network */}
+          <ModularRoads />
+
+          {/* 2. Forest Perimeter */}
           <Forest />
 
-          {/* 3. Power Generation Infrastructure */}
+          {/* 3. Tampere Näsinneula Observation Tower (North-West) */}
+          <NasineulaTower position={[-5.0, 0, -6.0]} />
+
+          {/* 4. Power Generation Infrastructure (Wind Turbines) */}
           <WindTurbines />
           <PowerSubstation />
 
-          {/* 4. Central Data Center (Datakeskus) */}
+          {/* 5. Central Data Center Compound (East) */}
           <DataCenter
+            position={[6.5, 0, 0.0]}
             isSelected={dataCenterHovered}
             onHover={setDataCenterHovered}
             onClick={() => onOpenDetails('overview')}
           />
 
-          {/* 5. Glowing District Heating Pipeline Network */}
+          {/* 6. Carpark (Attached East of Datacenter) */}
+          <Carpark />
+
+          {/* 7. Glowing District Heating Pipeline Network (Connecting Datacenter to Houses) */}
           <DistrictHeatPipes active={heatActive} />
 
-          {/* 6. Nordic Residential Houses */}
+          {/* 8. Nordic Residential Houses (South-West Quadrant) */}
           <NordicHouses onSelectHouse={onSelectHouse} />
 
-          {/* 7. Animated Road Traffic */}
+          {/* 9. Animated Road Traffic */}
           <Traffic />
 
-          {/* 8. 3D Pinned Speech Bubble UI on Data Center */}
+          {/* 10. 3D Pinned Speech Bubble UI on Data Center */}
           <DataCenterCard
             heatActive={heatActive}
             onToggleHeat={onToggleHeat}
@@ -118,7 +131,7 @@ export const Scene: React.FC<SceneProps> = ({
           maxZoom={95}
           maxPolarAngle={Math.PI / 2.7}  // ~67 deg: generous low angle while safely clearing ground/tree trunks
           minPolarAngle={Math.PI / 8.0}  // ~22 deg: generous high aerial view
-          target={[0, 0.4, 0]}
+          target={[1.0, 0.4, 1.5]}
           dampingFactor={0.06}
         />
       </Canvas>

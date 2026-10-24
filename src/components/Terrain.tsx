@@ -2,146 +2,102 @@ import React, { useMemo } from 'react'
 import * as THREE from 'three'
 
 export const Terrain: React.FC = () => {
-  // Road loop coordinates around the Data Center
-  const roadCurve = useMemo(() => {
-    const points = [
-      new THREE.Vector3(-2.8, 0.05, -2.2),
-      new THREE.Vector3(2.6, 0.05, -2.2),
-      new THREE.Vector3(3.2, 0.05, 0),
-      new THREE.Vector3(2.8, 0.05, 2.4),
-      new THREE.Vector3(-2.6, 0.05, 2.4),
-      new THREE.Vector3(-3.2, 0.05, 0),
-    ]
-    return new THREE.CatmullRomCurve3(points, true, 'centripetal')
-  }, [])
+  // Road network matching the user's top-view schematic
+  const roadGeometry = useMemo(() => {
+    // We create the road network by combining road strips with clean intersections
+    const roadWidth = 1.05
+    const halfW = roadWidth / 2
 
-  // Road geometry with extruded width
-  const roadGeo = useMemo(() => {
-    const pts = roadCurve.getSpacedPoints(60)
-    const geom = new THREE.BufferGeometry()
+    // Helper to add a straight road segment [x1, z1] -> [x2, z2]
     const positions: number[] = []
     const normals: number[] = []
 
-    const halfWidth = 0.55
+    const addSegment = (x1: number, z1: number, x2: number, z2: number) => {
+      const dx = x2 - x1
+      const dz = z2 - z1
+      const len = Math.hypot(dx, dz)
+      if (len === 0) return
+      const nx = -dz / len
+      const nz = dx / len
 
-    for (let i = 0; i < pts.length; i++) {
-      const p = pts[i]
-      const nextP = pts[(i + 1) % pts.length]
-      const tangent = new THREE.Vector3().subVectors(nextP, p).normalize()
-      const up = new THREE.Vector3(0, 1, 0)
-      const normal = new THREE.Vector3().crossVectors(tangent, up).normalize()
+      const p1x = x1 + nx * halfW
+      const p1z = z1 + nz * halfW
 
-      const pLeft = p.clone().addScaledVector(normal, halfWidth)
-      const pRight = p.clone().addScaledVector(normal, -halfWidth)
+      const p2x = x1 - nx * halfW
+      const p2z = z1 - nz * halfW
 
-      const nextNormal = new THREE.Vector3()
-        .crossVectors(
-          new THREE.Vector3()
-            .subVectors(pts[(i + 2) % pts.length], nextP)
-            .normalize(),
-          up
-        )
-        .normalize()
+      const p3x = x2 - nx * halfW
+      const p3z = z2 - nz * halfW
 
-      const pNextLeft = nextP.clone().addScaledVector(nextNormal, halfWidth)
-      const pNextRight = nextP.clone().addScaledVector(nextNormal, -halfWidth)
+      const p4x = x2 + nx * halfW
+      const p4z = z2 + nz * halfW
 
       // Triangle 1
-      positions.push(pLeft.x, 0.03, pLeft.z)
-      positions.push(pRight.x, 0.03, pRight.z)
-      positions.push(pNextLeft.x, 0.03, pNextLeft.z)
+      positions.push(p1x, 0.002, p1z)
+      positions.push(p2x, 0.002, p2z)
+      positions.push(p3x, 0.002, p3z)
 
       // Triangle 2
-      positions.push(pRight.x, 0.03, pRight.z)
-      positions.push(pNextRight.x, 0.03, pNextRight.z)
-      positions.push(pNextLeft.x, 0.03, pNextLeft.z)
+      positions.push(p1x, 0.002, p1z)
+      positions.push(p3x, 0.002, p3z)
+      positions.push(p4x, 0.002, p4z)
 
-      for (let k = 0; k < 6; k++) {
+      for (let i = 0; i < 6; i++) {
         normals.push(0, 1, 0)
       }
     }
 
-    geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-    geom.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
-    geom.computeVertexNormals()
-    return geom
-  }, [roadCurve])
+    // 1. Loop encircling the Datacenter
+    // North road of loop
+    addSegment(3.0, -3.5, 10.0, -3.5)
+    // East road of loop (between Datacenter & Carpark)
+    addSegment(10.0, -3.5, 10.0, 3.5)
+    // West road of loop
+    addSegment(3.0, -3.5, 3.0, 0.5)
+    // Connector road from West loop edge heading to Residential quarter
+    addSegment(3.0, 0.5, -6.0, 0.5)
 
-  // Road branch heading North towards distant town (Flat on terrain)
-  const hillRoadGeo = useMemo(() => {
-    const points = [
-      new THREE.Vector3(0, 0.03, -2.2),
-      new THREE.Vector3(0.4, 0.03, -3.6),
-      new THREE.Vector3(1.2, 0.03, -4.8),
-      new THREE.Vector3(2.4, 0.03, -6.6),
-      new THREE.Vector3(3.6, 0.03, -9.0),
-      new THREE.Vector3(5.2, 0.03, -12.5),
-      new THREE.Vector3(7.0, 0.03, -16.5),
-    ]
-    const curve = new THREE.CatmullRomCurve3(points)
-    const pts = curve.getSpacedPoints(50)
-    const positions: number[] = []
-    const normals: number[] = []
-    const halfWidth = 0.5
+    // 2. Main South East-West Avenue
+    addSegment(-11.0, 3.5, 10.0, 3.5)
 
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p = pts[i]
-      const nextP = pts[i + 1]
-      const tangent = new THREE.Vector3().subVectors(nextP, p).normalize()
-      const up = new THREE.Vector3(0, 1, 0)
-      const normal = new THREE.Vector3().crossVectors(tangent, up).normalize()
+    // 3. Residential South Avenue
+    addSegment(-6.0, 0.5, -6.0, 8.5)
 
-      const pLeft = p.clone().addScaledVector(normal, halfWidth)
-      const pRight = p.clone().addScaledVector(normal, -halfWidth)
-      const pNextLeft = nextP.clone().addScaledVector(normal, halfWidth)
-      const pNextRight = nextP.clone().addScaledVector(normal, -halfWidth)
-
-      positions.push(pLeft.x, 0.03, pLeft.z)
-      positions.push(pRight.x, 0.03, pRight.z)
-      positions.push(pNextLeft.x, 0.03, pNextLeft.z)
-
-      positions.push(pRight.x, 0.03, pRight.z)
-      positions.push(pNextRight.x, 0.03, pNextRight.z)
-      positions.push(pNextLeft.x, 0.03, pNextLeft.z)
-
-      for (let k = 0; k < 6; k++) {
-        normals.push(0, 1, 0)
-      }
-    }
     const geom = new THREE.BufferGeometry()
     geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
     geom.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
     return geom
   }, [])
 
-  // Snow patches scattered naturally across the expanded terrain
-  const snowPatches: [number, number, number, number][] = [
-    [-1.8, 0.02, 1.8, 0.5],
-    [-2.2, 0.02, 2.9, 0.65],
-    [0.8, 0.02, 3.2, 0.4],
-    [3.2, 0.02, 3.1, 0.6],
-    [4.6, 0.02, 1.2, 0.55],
-    [-4.5, 0.02, -0.6, 0.7],
-    [-1.5, 0.02, -1.8, 0.45],
-    [3.6, 0.02, -1.2, 0.6],
-    [-6.5, 0.02, 3.8, 0.7],
-    [-8.2, 0.02, 1.4, 0.8],
-    [2.4, 0.02, 6.2, 0.65],
-    [-3.2, 0.02, 7.5, 0.75],
-    [5.8, 0.02, 4.2, 0.6],
-    [-5.8, 0.02, -7.5, 0.85],
-    [1.8, 0.02, -7.2, 0.7],
-  ]
+  // Lake shape: large smooth oval in the North-West
+  const lakeShape = useMemo(() => {
+    const shape = new THREE.Shape()
+    // Elliptical organic perimeter
+    const radiusX = 13.5
+    const radiusY = 7.5
+    const pointsCount = 36
+    for (let i = 0; i <= pointsCount; i++) {
+      const angle = (i / pointsCount) * Math.PI * 2
+      // subtle organic distortion
+      const wobble = 1.0 + Math.sin(angle * 3) * 0.06 + Math.cos(angle * 2) * 0.04
+      const x = Math.cos(angle) * radiusX * wobble
+      const y = Math.sin(angle) * radiusY * wobble
+      if (i === 0) shape.moveTo(x, y)
+      else shape.lineTo(x, y)
+    }
+    return shape
+  }, [])
+
 
   return (
     <group>
-      {/* 1. Main Expansive Ground Plane (Completely Flat) */}
+      {/* 1. Main Expansive Flat Ground Plane */}
       <mesh
         position={[0, -0.05, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
       >
-        <planeGeometry args={[110, 110, 1, 1]} />
+        <planeGeometry args={[120, 120, 1, 1]} />
         <meshStandardMaterial
           color="#577943"
           roughness={0.85}
@@ -149,93 +105,33 @@ export const Terrain: React.FC = () => {
         />
       </mesh>
 
-      {/* 2. Expansive Lake / Fjord (Top-Right / East extending flush with terrain) */}
-      <group position={[15.0, 0.002, -8.0]}>
-        {/* Shoreline Sand/Gravel Edge */}
-        <mesh position={[-6.2, 0.004, 2.0]} rotation={[-Math.PI / 2, 0, 0.2]} receiveShadow>
-          <planeGeometry args={[5, 30]} />
-          <meshStandardMaterial color="#887858" roughness={0.95} flatShading />
+      {/* 2. Lake Näsijärvi in the North-West (Top-Left) */}
+      <group position={[-8.5, 0.002, -18.0]}>
+        {/* Sandy / Pebble Shoreline Rim */}
+        <mesh position={[0, 0.003, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <shapeGeometry args={[lakeShape]} />
+          <meshStandardMaterial color="#887858" roughness={0.95} />
         </mesh>
-
-        {/* Vast Water Surface with stylized translucent cyan sheen */}
-        <mesh position={[4, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[42, 42]} />
+        {/* Lake Water Surface */}
+        <mesh position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <shapeGeometry args={[lakeShape]} />
           <meshStandardMaterial
             color="#38bdf8"
             roughness={0.12}
             metalness={0.25}
             transparent
-            opacity={0.85}
+            opacity={0.86}
           />
         </mesh>
-
-        {/* Archipelago Island 1 (closest to village shore) */}
-        <group position={[-7.5, 0.04, 5.0]}>
-          <mesh castShadow receiveShadow>
-            <cylinderGeometry args={[1.2, 1.6, 0.08, 7]} />
-            <meshStandardMaterial color="#577943" roughness={0.9} flatShading />
-          </mesh>
-        </group>
-
-        {/* Archipelago Island 2 */}
-        <group position={[-5.0, 0.04, 3.2]}>
-          <mesh castShadow receiveShadow>
-            <cylinderGeometry args={[1.5, 2.0, 0.08, 8]} />
-            <meshStandardMaterial color="#577943" roughness={0.9} flatShading />
-          </mesh>
-        </group>
-
-        {/* Archipelago Island 3 */}
-        <group position={[-2.5, 0.04, -0.5]}>
-          <mesh castShadow receiveShadow>
-            <cylinderGeometry args={[1.4, 1.8, 0.08, 7]} />
-            <meshStandardMaterial color="#577943" roughness={0.9} flatShading />
-          </mesh>
-        </group>
       </group>
 
-      {/* 4. Asphalt Road Network */}
-      <mesh geometry={roadGeo} receiveShadow>
-        <meshStandardMaterial color="#334155" roughness={0.6} />
-      </mesh>
-      <mesh geometry={hillRoadGeo} receiveShadow>
-        <meshStandardMaterial color="#334155" roughness={0.6} />
+
+      {/* 3. Road Foundation Underbed */}
+      <mesh geometry={roadGeometry} receiveShadow>
+        <meshStandardMaterial color="#1e293b" roughness={0.8} />
       </mesh>
 
-      {/* Road Curbs (Light grey borders along the data center) */}
-      <mesh position={[0, 0.04, 1.85]}>
-        <boxGeometry args={[4.8, 0.04, 0.1]} />
-        <meshStandardMaterial color="#94a3b8" />
-      </mesh>
-      <mesh position={[0, 0.04, -1.85]}>
-        <boxGeometry args={[4.8, 0.04, 0.1]} />
-        <meshStandardMaterial color="#94a3b8" />
-      </mesh>
-      <mesh position={[-2.35, 0.04, 0]}>
-        <boxGeometry args={[0.1, 0.04, 3.7]} />
-        <meshStandardMaterial color="#94a3b8" />
-      </mesh>
-      <mesh position={[2.35, 0.04, 0]}>
-        <boxGeometry args={[0.1, 0.04, 3.7]} />
-        <meshStandardMaterial color="#94a3b8" />
-      </mesh>
 
-      {/* 5. Natural Snow Patches scattered around lawns */}
-      {snowPatches.map(([x, y, z, r], idx) => (
-        <mesh
-          key={idx}
-          position={[x, y, z]}
-          rotation={[-Math.PI / 2, 0, idx * 0.7]}
-          receiveShadow
-        >
-          <circleGeometry args={[r, 7]} />
-          <meshStandardMaterial
-            color="#f1f5f9"
-            roughness={0.95}
-            flatShading
-          />
-        </mesh>
-      ))}
     </group>
   )
 }

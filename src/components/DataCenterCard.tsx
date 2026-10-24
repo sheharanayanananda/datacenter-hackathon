@@ -16,7 +16,7 @@ export const DataCenterCard: React.FC<DataCenterCardProps> = ({
 }) => {
   return (
     <Html
-      position={[0.8, 2.5, 0.4]}
+      position={[7.2, 2.5, 0.4]}
       center
       distanceFactor={11}
       zIndexRange={[100, 0]}

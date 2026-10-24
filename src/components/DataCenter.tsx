@@ -1,14 +1,79 @@
 import React, { useRef, useMemo } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
+import { useGLTF } from '@react-three/drei'
 
 interface DataCenterProps {
+  position?: [number, number, number];
   onHover?: (hovered: boolean) => void;
   onClick?: () => void;
   isSelected?: boolean;
 }
 
-export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSelected }) => {
+const KenneyTank: React.FC<{ position: [number, number, number]; scale?: number }> = ({
+  position,
+  scale = 1,
+}) => {
+  try {
+    const gltf = useGLTF('/assets/models/industrial/detail-tank-large.glb')
+    const clone = useMemo(() => {
+      const c = gltf.scene.clone(true)
+      c.traverse((node) => {
+        if ((node as THREE.Mesh).isMesh) {
+          node.castShadow = true
+          node.receiveShadow = true
+        }
+      })
+      return c
+    }, [gltf])
+    return (
+      <group position={position} scale={[scale, scale, scale]}>
+        <primitive object={clone} />
+      </group>
+    )
+  } catch (e) {
+    return (
+      <mesh position={[position[0], position[1] + 0.6, position[2]]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.5, 0.5, 1.2, 16]} />
+        <meshStandardMaterial color="#64748b" metalness={0.7} roughness={0.3} />
+      </mesh>
+    )
+  }
+}
+
+const KenneySolarArray: React.FC<{
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: number;
+}> = ({ position, rotation = [0, 0, 0], scale = 1 }) => {
+  try {
+    const gltf = useGLTF('/assets/models/industrial/solar-panel-landscape-group.glb')
+    const clone = useMemo(() => {
+      const c = gltf.scene.clone(true)
+      c.traverse((node) => {
+        if ((node as THREE.Mesh).isMesh) {
+          node.castShadow = true
+          node.receiveShadow = true
+        }
+      })
+      return c
+    }, [gltf])
+    return (
+      <group position={position} rotation={rotation} scale={[scale, scale, scale]}>
+        <primitive object={clone} />
+      </group>
+    )
+  } catch (e) {
+    return null
+  }
+}
+
+export const DataCenter: React.FC<DataCenterProps> = ({
+  position = [6.5, 0, 0.0],
+  onHover,
+  onClick,
+  isSelected,
+}) => {
   const fansRef = useRef<THREE.Group>(null)
   const beaconRef = useRef<THREE.PointLight>(null)
 
@@ -38,7 +103,7 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
 
   return (
     <group
-      position={[0, 0, 0]}
+      position={position}
       onPointerOver={(e) => {
         e.stopPropagation()
         onHover?.(true)
@@ -52,15 +117,15 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
         onClick?.()
       }}
     >
-      {/* Foundation plinth */}
+      {/* 1. Main Concrete Foundation Plinth */}
       <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
-        <boxGeometry args={[4.6, 0.4, 3.8]} />
+        <boxGeometry args={[4.6, 0.4, 4.0]} />
         <meshStandardMaterial color="#475569" roughness={0.7} />
       </mesh>
 
-      {/* Main Building Body */}
+      {/* 2. Main Server Building Body */}
       <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
-        <boxGeometry args={[4.2, 1.0, 3.4]} />
+        <boxGeometry args={[4.2, 1.0, 3.6]} />
         <meshStandardMaterial
           color={isSelected ? '#e2e8f0' : '#cbd5e1'}
           roughness={0.4}
@@ -70,7 +135,7 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
 
       {/* Cyber / Neon Trim Line along upper facade */}
       <mesh position={[0, 1.42, 0]}>
-        <boxGeometry args={[4.24, 0.05, 3.44]} />
+        <boxGeometry args={[4.24, 0.05, 3.64]} />
         <meshStandardMaterial
           color="#38bdf8"
           emissive="#0284c7"
@@ -80,23 +145,22 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
 
       {/* Parapet / Roof Border */}
       <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
-        <boxGeometry args={[4.3, 0.15, 3.5]} />
+        <boxGeometry args={[4.3, 0.15, 3.7]} />
         <meshStandardMaterial color="#334155" roughness={0.6} />
       </mesh>
 
       {/* Dark Roof Top */}
       <mesh position={[0, 1.52, 0]} receiveShadow>
-        <boxGeometry args={[4.1, 0.02, 3.3]} />
+        <boxGeometry args={[4.1, 0.02, 3.5]} />
         <meshStandardMaterial color="#1e293b" roughness={0.8} />
       </mesh>
 
-      {/* Entrance / Server Bay Garage Doors */}
-      <mesh position={[1.3, 0.7, 1.71]} castShadow>
+      {/* Server Bay Garage Doors (Facing South / road) */}
+      <mesh position={[1.3, 0.7, 1.81]} castShadow>
         <boxGeometry args={[0.9, 0.7, 0.05]} />
         <meshStandardMaterial color="#64748b" metalness={0.6} roughness={0.4} />
       </mesh>
-      {/* Glow frame around server bay */}
-      <mesh position={[1.3, 0.7, 1.73]}>
+      <mesh position={[1.3, 0.7, 1.83]}>
         <boxGeometry args={[0.95, 0.75, 0.01]} />
         <meshStandardMaterial
           color="#10b981"
@@ -107,32 +171,25 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
       </mesh>
 
       {/* Front Entrance Security Door */}
-      <mesh position={[-0.8, 0.65, 1.71]}>
+      <mesh position={[-0.8, 0.65, 1.81]}>
         <boxGeometry args={[0.7, 0.6, 0.04]} />
         <meshStandardMaterial color="#334155" />
       </mesh>
-      <mesh position={[-0.8, 0.98, 1.72]}>
+      <mesh position={[-0.8, 0.98, 1.82]}>
         <boxGeometry args={[0.6, 0.06, 0.02]} />
         <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={2} />
       </mesh>
 
-      {/* Industrial Side Pipe Inlets (Where heat pipes exit into the city) */}
+      {/* Industrial Side Pipe Manifolds (Connecting into District Heating Grid) */}
       <group position={[-2.12, 0.5, 0.4]}>
         <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-          <cylinderGeometry args={[0.12, 0.12, 0.3, 16]} />
+          <cylinderGeometry args={[0.14, 0.14, 0.35, 16]} />
           <meshStandardMaterial color="#ea580c" metalness={0.7} roughness={0.3} />
         </mesh>
       </group>
       <group position={[-2.12, 0.5, -0.4]}>
         <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-          <cylinderGeometry args={[0.12, 0.12, 0.3, 16]} />
-          <meshStandardMaterial color="#ea580c" metalness={0.7} roughness={0.3} />
-        </mesh>
-      </group>
-      {/* Front Pipe Outlets */}
-      <group position={[-0.3, 0.35, 1.72]}>
-        <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.09, 0.09, 0.25, 16]} />
+          <cylinderGeometry args={[0.14, 0.14, 0.35, 16]} />
           <meshStandardMaterial color="#ea580c" metalness={0.7} roughness={0.3} />
         </mesh>
       </group>
@@ -140,12 +197,10 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
       {/* ROOFTOP EQUIPMENT */}
       {/* 1. Large Dual HVAC Chiller Units */}
       <group position={[-0.8, 1.75, -0.6]}>
-        {/* Chiller Housing 1 */}
         <mesh castShadow receiveShadow>
           <boxGeometry args={[1.6, 0.45, 0.9]} />
           <meshStandardMaterial color="#94a3b8" metalness={0.5} roughness={0.4} />
         </mesh>
-        {/* Fan grills */}
         <mesh position={[-0.4, 0.24, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.3, 0.3, 0.04, 20]} />
           <meshStandardMaterial color="#1e293b" />
@@ -157,12 +212,10 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
       </group>
 
       <group position={[-0.8, 1.75, 0.6]}>
-        {/* Chiller Housing 2 */}
         <mesh castShadow receiveShadow>
           <boxGeometry args={[1.6, 0.45, 0.9]} />
           <meshStandardMaterial color="#94a3b8" metalness={0.5} roughness={0.4} />
         </mesh>
-        {/* Fan grills */}
         <mesh position={[-0.4, 0.24, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.3, 0.3, 0.04, 20]} />
           <meshStandardMaterial color="#1e293b" />
@@ -175,7 +228,6 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
 
       {/* Rotating Chiller Fans */}
       <group ref={fansRef} position={[-0.8, 1.99, 0]}>
-        {/* Chiller 1 Fans */}
         <group position={[-0.4, 0, -0.6]} rotation={[-Math.PI / 2, 0, 0]}>
           <mesh>
             <boxGeometry args={[0.5, 0.05, 0.02]} />
@@ -197,7 +249,6 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
           </mesh>
         </group>
 
-        {/* Chiller 2 Fans */}
         <group position={[-0.4, 0, 0.6]} rotation={[-Math.PI / 2, 0, 0]}>
           <mesh>
             <boxGeometry args={[0.5, 0.05, 0.02]} />
@@ -222,7 +273,6 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
 
       {/* 2. Rooftop Solar Panel Arrays (Right side of roof) */}
       <group position={[1.2, 1.62, 0.5]}>
-        {/* Row 1 */}
         <mesh
           geometry={solarPanelGeo}
           material={solarPanelMat}
@@ -237,7 +287,6 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
           rotation={[-0.35, 0, 0]}
           castShadow
         />
-        {/* Row 2 */}
         <mesh
           geometry={solarPanelGeo}
           material={solarPanelMat}
@@ -280,6 +329,17 @@ export const DataCenter: React.FC<DataCenterProps> = ({ onHover, onClick, isSele
         distance={2.5}
         intensity={1.5}
       />
+
+      {/* KENNEY INDUSTRIAL ASSETS INTEGRATION */}
+      {/* Thermal Storage Heat Accumulation Tanks (West side near district heating outlet) */}
+      <KenneyTank position={[-2.7, 0, 1.0]} scale={0.75} />
+      <KenneyTank position={[-2.7, 0, -1.0]} scale={0.75} />
+
+      {/* High-efficiency solar arrays in the industrial yard */}
+      <KenneySolarArray position={[1.2, 0, -2.4]} rotation={[0, Math.PI, 0]} scale={0.65} />
     </group>
   )
 }
+
+useGLTF.preload('/assets/models/industrial/detail-tank-large.glb')
+useGLTF.preload('/assets/models/industrial/solar-panel-landscape-group.glb')

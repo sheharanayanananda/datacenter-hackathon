@@ -88,12 +88,45 @@ const SingleTurbine: React.FC<WindTurbineProps> = ({
 export const WindTurbines: React.FC = () => {
   return (
     <group>
-      {/* Turbine 1 (Flat on terrain) */}
-      <SingleTurbine position={[-6.2, 0, -3.2]} scale={1.0} speedMultiplier={1.0} rotation={-0.3} />
-      {/* Turbine 2 */}
-      <SingleTurbine position={[-5.3, 0, -5.0]} scale={1.05} speedMultiplier={1.1} rotation={-0.2} />
-      {/* Turbine 3 */}
-      <SingleTurbine position={[-4.0, 0, -6.6]} scale={1.1} speedMultiplier={0.95} rotation={-0.25} />
+      {/* 1. Turbines replacing the green patches to the East of the Lake */}
+      <SingleTurbine
+        position={[7.5, 0, -15.0]}
+        scale={1.1}
+        speedMultiplier={1.0}
+        rotation={-0.4}
+      />
+      <SingleTurbine
+        position={[10.2, 0, -14.2]}
+        scale={1.05}
+        speedMultiplier={1.15}
+        rotation={-0.35}
+      />
+      <SingleTurbine
+        position={[12.8, 0, -13.0]}
+        scale={1.15}
+        speedMultiplier={0.95}
+        rotation={-0.3}
+      />
+
+      {/* 2. Existing Wind Turbines in the South-East */}
+      <SingleTurbine
+        position={[12.0, 0, 11.2]}
+        scale={1.1}
+        speedMultiplier={1.0}
+        rotation={-0.4}
+      />
+      <SingleTurbine
+        position={[14.5, 0, 12.8]}
+        scale={1.05}
+        speedMultiplier={1.15}
+        rotation={-0.35}
+      />
+      <SingleTurbine
+        position={[11.2, 0, 14.5]}
+        scale={1.15}
+        speedMultiplier={0.95}
+        rotation={-0.3}
+      />
     </group>
   )
 }
