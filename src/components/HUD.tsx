@@ -131,6 +131,7 @@ export const HUD: React.FC<HUDProps> = ({
     badgeBg: string;
     badgeText: string;
     borderHover: string;
+    hoverText: string;
   }[] = [
     {
       key: 'energy',
@@ -140,6 +141,7 @@ export const HUD: React.FC<HUDProps> = ({
       badgeBg: 'bg-amber-100',
       badgeText: 'text-amber-600',
       borderHover: 'hover:border-amber-400 hover:border-b-amber-500',
+      hoverText: 'group-hover:text-amber-600',
     },
     {
       key: 'surroundings',
@@ -149,6 +151,7 @@ export const HUD: React.FC<HUDProps> = ({
       badgeBg: 'bg-orange-100',
       badgeText: 'text-orange-600',
       borderHover: 'hover:border-orange-400 hover:border-b-orange-500',
+      hoverText: 'group-hover:text-orange-600',
     },
     {
       key: 'jobs',
@@ -158,6 +161,7 @@ export const HUD: React.FC<HUDProps> = ({
       badgeBg: 'bg-sky-100',
       badgeText: 'text-sky-600',
       borderHover: 'hover:border-sky-400 hover:border-b-sky-500',
+      hoverText: 'group-hover:text-sky-600',
     },
     {
       key: 'transport',
@@ -167,6 +171,7 @@ export const HUD: React.FC<HUDProps> = ({
       badgeBg: 'bg-purple-100',
       badgeText: 'text-purple-600',
       borderHover: 'hover:border-purple-400 hover:border-b-purple-500',
+      hoverText: 'group-hover:text-purple-600',
     },
     {
       key: 'land_use',
@@ -176,6 +181,7 @@ export const HUD: React.FC<HUDProps> = ({
       badgeBg: 'bg-emerald-100',
       badgeText: 'text-emerald-600',
       borderHover: 'hover:border-emerald-400 hover:border-b-emerald-500',
+      hoverText: 'group-hover:text-emerald-600',
     },
     {
       key: 'safety',
@@ -185,6 +191,7 @@ export const HUD: React.FC<HUDProps> = ({
       badgeBg: 'bg-rose-100',
       badgeText: 'text-rose-600',
       borderHover: 'hover:border-rose-400 hover:border-b-rose-500',
+      hoverText: 'group-hover:text-rose-600',
     },
     {
       key: 'future',
@@ -194,6 +201,7 @@ export const HUD: React.FC<HUDProps> = ({
       badgeBg: 'bg-teal-100',
       badgeText: 'text-teal-600',
       borderHover: 'hover:border-teal-400 hover:border-b-teal-500',
+      hoverText: 'group-hover:text-teal-600',
     },
   ]
 
@@ -206,13 +214,13 @@ export const HUD: React.FC<HUDProps> = ({
     <div className="fixed inset-0 pointer-events-none flex flex-col justify-between p-3 sm:p-5 z-20">
       {/* Top Header Layer */}
       <div className="flex flex-wrap items-center justify-between w-full gap-2">
-        {/* Left: Combined Minimal Header Pill with Game Name & User Name */}
+        {/* Left: Combined Minimal Header Pill with Game Name & User Name - Duolingo 3D Chunky Style */}
         <div className="pointer-events-auto relative">
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl border-2 border-white shadow-lg px-3.5 py-2 flex items-center gap-3 text-xs select-none">
+          <div className="bg-white rounded-2xl border-2 border-slate-200 border-b-4 border-b-slate-300 shadow-md px-3.5 py-2 flex items-center gap-3 text-xs select-none">
             {/* Game Branding */}
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center shadow-xs">
-                <Zap className="w-3.5 h-3.5 fill-white stroke-none" />
+              <div className="w-7 h-7 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                <Zap className="w-4 h-4 fill-white stroke-none" />
               </div>
               <span className="text-xs sm:text-[13px] font-black tracking-tight text-slate-900 uppercase">
                 Datacenter Simulator
@@ -220,7 +228,7 @@ export const HUD: React.FC<HUDProps> = ({
             </div>
 
             {/* Subtle Vertical Divider */}
-            {user && <div className="h-4 w-px bg-slate-200" />}
+            {user && <div className="h-5 w-[2px] bg-slate-200" />}
 
             {/* User Name (Clickable for Account & Logout Dropdown) */}
             {user && (
@@ -228,13 +236,13 @@ export const HUD: React.FC<HUDProps> = ({
                 ref={userButtonRef}
                 type="button"
                 onClick={() => setShowUserMenu((prev) => !prev)}
-                className="flex items-center gap-1.5 py-1 px-2 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer group"
+                className="flex items-center gap-1.5 py-1 px-2.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer group"
                 title="Account options & logout"
               >
-                <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                  <User className="w-3 h-3 text-emerald-600" />
+                <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center border border-emerald-200">
+                  <User className="w-3.5 h-3.5 text-emerald-600" />
                 </div>
-                <span className="font-bold text-slate-700 group-hover:text-slate-900 text-xs">
+                <span className="font-black text-slate-700 group-hover:text-slate-900 text-xs">
                   {user.username}
                 </span>
                 <ChevronDown
@@ -246,16 +254,16 @@ export const HUD: React.FC<HUDProps> = ({
             )}
           </div>
 
-          {/* User Dropdown Menu with Red Logout Button */}
+          {/* User Dropdown Menu with Red Logout Button - Duolingo Style */}
           {user && showUserMenu && (
             <div
               ref={userMenuRef}
-              className="absolute left-0 top-full mt-2 w-52 bg-white border-2 border-slate-200 border-b-4 rounded-2xl shadow-xl p-2.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+              className="absolute left-0 top-full mt-2 w-56 bg-white border-2 border-slate-200 border-b-6 border-b-slate-300 rounded-3xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150"
             >
-              <div className="px-2 py-1.5 mb-1.5 border-b border-slate-100">
+              <div className="px-2.5 py-2 mb-2 border-b border-slate-100 bg-slate-50 rounded-2xl">
                 <div className="text-xs font-black text-slate-900 truncate">{user.username}</div>
-                <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-1 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                <div className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
                   {character?.name || 'Young'} Track • Level {level}
                 </div>
               </div>
@@ -267,78 +275,78 @@ export const HUD: React.FC<HUDProps> = ({
                   setShowUserMenu(false)
                   setShowLogoutConfirm(true)
                 }}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200/80 hover:border-rose-600 transition-all cursor-pointer group"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl text-xs font-black text-white duo-btn-red cursor-pointer uppercase tracking-wider select-none shadow-xs"
               >
-                <LogOut className="w-3.5 h-3.5 group-hover:stroke-white transition-colors" />
+                <LogOut className="w-4 h-4 stroke-[2.5]" />
                 <span>Log Out</span>
               </button>
             </div>
           )}
         </div>
 
-        {/* Right: Judge Demo Switcher & Camera Navigation Controls (Minimal & Cohesive) */}
-        <div className="pointer-events-auto flex items-center gap-2 bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-2xl border-2 border-white shadow-lg text-xs select-none">
+        {/* Right: Judge Demo Switcher & Camera Navigation Controls - Duolingo 3D Chunky Style */}
+        <div className="pointer-events-auto flex items-center gap-2 bg-white px-3 py-1.5 rounded-2xl border-2 border-slate-200 border-b-4 border-b-slate-300 shadow-md text-xs select-none">
           {/* Demo Level Segmented Control */}
-          <div className="flex items-center gap-1 bg-slate-100/90 p-0.5 rounded-xl">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1.5 pr-0.5 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-500" />
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider pl-1.5 pr-0.5 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               <span className="hidden sm:inline">Demo</span>
             </span>
             {([1, 2, 3] as DataCenterLevel[]).map((lvl) => (
               <button
                 key={lvl}
                 onClick={() => setDemoLevel(lvl)}
-                className={`px-2 py-0.5 rounded-lg text-[10px] font-black transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer ${
                   level === lvl
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800'
+                    ? 'duo-btn-green'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
                 }`}
                 title={`Switch simulation directly to Level ${lvl}`}
               >
-                L{lvl}{lvl === 3 ? ' Peak' : ''}
+                L{lvl}
               </button>
             ))}
           </div>
 
-          <div className="h-4 w-px bg-slate-200" />
+          <div className="h-5 w-[2px] bg-slate-200" />
 
           {/* Camera Navigation Segmented Switch (Pan vs Rotate) */}
-          <div className="flex items-center bg-slate-100/90 p-0.5 rounded-xl">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               onClick={() => onToggleControlMode?.('pan')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer ${
+              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-[11px] uppercase transition-all cursor-pointer ${
                 controlMode === 'pan'
-                  ? 'bg-white text-slate-900 shadow-xs font-black'
+                  ? 'bg-white text-slate-900 shadow-xs font-black border border-slate-200'
                   : 'text-slate-500 hover:text-slate-800 font-bold'
               }`}
               title="Pan camera with Left Click / Touch Drag"
             >
-              <Move className="w-3 h-3" />
+              <Move className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Pan</span>
             </button>
             <button
               onClick={() => onToggleControlMode?.('rotate')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer ${
+              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-[11px] uppercase transition-all cursor-pointer ${
                 controlMode === 'rotate'
-                  ? 'bg-white text-slate-900 shadow-xs font-black'
+                  ? 'bg-white text-slate-900 shadow-xs font-black border border-slate-200'
                   : 'text-slate-500 hover:text-slate-800 font-bold'
               }`}
               title="Rotate scene with Left Click / Touch Drag"
             >
-              <RotateCcw className="w-3 h-3" />
+              <RotateCcw className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Rotate</span>
             </button>
           </div>
 
-          <div className="h-4 w-px bg-slate-200" />
+          <div className="h-5 w-[2px] bg-slate-200" />
 
           {/* Recenter Camera Button */}
           <button
             onClick={onRecenter}
-            className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all cursor-pointer active:scale-95"
+            className="p-1.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all cursor-pointer active:scale-95"
             title="Recenter camera on campus"
           >
-            <Compass className="w-4 h-4 stroke-[2.2]" />
+            <Compass className="w-4 h-4 stroke-[2.5]" />
           </button>
         </div>
       </div>
@@ -349,42 +357,42 @@ export const HUD: React.FC<HUDProps> = ({
       <div className="flex items-end justify-between w-full gap-3">
         {/* Bottom-Left Simulation Stats & 7 Glance Widgets */}
         <div className="pointer-events-auto flex flex-col gap-2.5 min-w-0 max-w-[calc(100vw-170px)]">
-          {/* Money Pill - Duolingo Treasury Badge */}
-          <div className="flex items-center bg-[#fffbeb] border-2 border-[#fcd34d] border-b-4 rounded-2xl px-3.5 py-1.5 w-fit gap-2.5 shadow-sm transition-all select-none">
-            <div className="w-7 h-7 rounded-xl bg-amber-400 text-amber-950 flex items-center justify-center font-black text-xs shadow-xs">
+          {/* Money Pill - Duolingo Chunky Treasury Badge */}
+          <div className="flex items-center bg-white border-2 border-amber-300 border-b-4 border-b-amber-500 rounded-2xl px-4 py-2 w-fit gap-3 shadow-md select-none transition-all hover:-translate-y-0.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-400 border-b-2 border-amber-600 text-amber-950 flex items-center justify-center font-black text-xs shadow-xs">
               <DollarSign className="w-4 h-4 stroke-[3]" />
             </div>
             <div className="flex flex-col text-left leading-none">
-              <span className="font-black text-slate-900 text-sm sm:text-base tracking-tight">
+              <span className="font-black text-slate-900 text-base sm:text-lg tracking-tight">
                 € {Math.round(money).toLocaleString()}
               </span>
-              <span className="text-[9px] font-extrabold text-amber-700 uppercase tracking-wider mt-0.5">
+              <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest mt-1">
                 City Treasury
               </span>
             </div>
           </div>
 
-          {/* 7 Clickable Glance Widgets in ONE Single Row - Duolingo 3D Button Style with Smooth Popup Transition */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
+          {/* 7 Clickable Glance Widgets in ONE Single Row - Duolingo 3D Chunky Buttons */}
+          <div className="flex items-center gap-2.5 overflow-x-auto scrollbar-none py-1.5">
             {glanceItems.map((item) => {
               const IconComp = item.icon
               return (
                 <button
                   key={item.key}
                   onClick={() => openEffect(item.key)}
-                  className={`bg-white hover:bg-white border-2 border-slate-200 border-b-4 ${item.borderHover} hover:-translate-y-1 hover:shadow-md active:translate-y-[2px] active:border-b-2 rounded-2xl px-3 py-1.5 flex items-center gap-2.5 cursor-pointer transition-all duration-200 shrink-0 whitespace-nowrap text-left group select-none shadow-sm`}
+                  className={`bg-white border-2 border-slate-200 border-b-4 border-b-slate-300 ${item.borderHover} hover:-translate-y-1 hover:shadow-md active:translate-y-[2px] active:border-b-2 rounded-2xl px-3 py-2 flex items-center gap-2.5 cursor-pointer transition-all duration-150 shrink-0 whitespace-nowrap text-left group select-none shadow-xs`}
                   title={`Click to view ${item.label} details`}
                 >
                   <div
-                    className={`w-8 h-8 rounded-xl ${item.badgeBg} ${item.badgeText} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-200 shadow-xs`}
+                    className={`w-9 h-9 rounded-xl ${item.badgeBg} ${item.badgeText} border-b-2 border-black/10 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-150 shadow-2xs`}
                   >
-                    <IconComp className="w-4 h-4 stroke-[2.5]" />
+                    <IconComp className="w-4 h-4 stroke-[2.8]" />
                   </div>
                   <div className="flex flex-col text-left leading-none">
-                    <span className="text-xs sm:text-[13px] font-black text-slate-800 tracking-tight">
+                    <span className="text-xs sm:text-[13px] font-black text-slate-900 tracking-tight">
                       {item.value}
                     </span>
-                    <span className="text-[10px] font-extrabold text-slate-400 group-hover:text-slate-600 uppercase tracking-wider mt-1 transition-colors">
+                    <span className={`text-[10px] font-black text-slate-400 ${item.hoverText} uppercase tracking-wider mt-1 transition-colors`}>
                       {item.label}
                     </span>
                   </div>
@@ -394,18 +402,16 @@ export const HUD: React.FC<HUDProps> = ({
           </div>
         </div>
 
-        {/* Bottom-Right Upgrade Button */}
+        {/* Bottom-Right Upgrade Button - Duolingo 3D Button */}
         <div className="pointer-events-auto shrink-0 mb-0.5">
           <button
             onClick={() => setIsUpgradeModalOpen(true)}
-            className={`flex flex-col items-center justify-center border-b-4 active:border-b-0 active:translate-y-1 px-5 py-2.5 rounded-2xl shadow-game-button transition-all group cursor-pointer text-white ${
-              level === 3
-                ? 'bg-amber-500 border-amber-700 hover:bg-amber-400'
-                : 'bg-emerald-500 border-emerald-700 hover:bg-emerald-400'
+            className={`flex flex-col items-center justify-center px-6 py-3 rounded-2xl shadow-md transition-all group cursor-pointer text-white select-none ${
+              level === 3 ? 'duo-btn-amber' : 'duo-btn-green'
             }`}
           >
             <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
-              <ChevronsUp className="w-5 h-5 stroke-[2.5]" />
+              <ChevronsUp className="w-5 h-5 stroke-[3]" />
             </div>
             <span className="font-black text-xs tracking-wider uppercase">
               {level === 3 ? 'MAX LEVEL' : `UPGRADE L${level + 1}`}
@@ -414,25 +420,25 @@ export const HUD: React.FC<HUDProps> = ({
         </div>
       </div>
 
-      {/* Logout Confirmation Modal */}
+      {/* Logout Confirmation Modal - Duolingo Style */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/65 backdrop-blur-sm pointer-events-auto animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-white border-2 border-slate-200 border-b-4 rounded-2xl shadow-2xl p-6 text-slate-800 flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-3">
-              <LogOut className="w-6 h-6 stroke-[2.5]" />
+          <div className="w-full max-w-sm bg-white border-2 border-slate-200 border-b-6 rounded-[32px] shadow-2xl p-6 text-slate-800 flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-3 shadow-xs border-2 border-rose-200">
+              <LogOut className="w-7 h-7 stroke-[2.5]" />
             </div>
-            <h3 className="text-base font-black text-slate-900 mb-1">
+            <h3 className="text-lg font-black text-slate-900 mb-1">
               Log Out of Datacenter Simulator?
             </h3>
-            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+            <p className="text-xs font-semibold text-slate-500 mb-5 leading-relaxed">
               Are you sure you want to log out? Any unsaved progress in this session may be lost.
             </p>
 
-            <div className="flex items-center gap-2.5 w-full">
+            <div className="flex items-center gap-3 w-full">
               <button
                 type="button"
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                className="flex-1 py-3 px-4 rounded-2xl font-black text-xs duo-btn-white cursor-pointer uppercase tracking-wider"
               >
                 Cancel
               </button>
@@ -442,9 +448,9 @@ export const HUD: React.FC<HUDProps> = ({
                   setShowLogoutConfirm(false)
                   signOut()
                 }}
-                className="flex-1 py-2.5 px-3 rounded-xl font-black text-xs bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-sm cursor-pointer"
+                className="flex-1 py-3 px-4 rounded-2xl font-black text-xs text-white duo-btn-red cursor-pointer shadow-md uppercase tracking-wider"
               >
-                Yes, Log Out
+                Log Out
               </button>
             </div>
           </div>

@@ -7,6 +7,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  body {
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  }
 }
 
 /* Custom pulsing energy animation */
@@ -21,4 +25,120 @@
 
 .energy-pulse {
   animation: pulseGlow 2s infinite ease-in-out;
+}
+
+/* Duolingo tactile 3D button utility classes */
+.duo-btn-green {
+  background-color: #58cc02;
+  border-bottom: 4px solid #58a700;
+  color: #ffffff;
+  transition: all 0.1s ease-in-out;
+}
+.duo-btn-green:hover {
+  background-color: #61e002;
+}
+.duo-btn-green:active {
+  border-bottom-width: 0px;
+  transform: translateY(4px);
+}
+
+.duo-btn-blue {
+  background-color: #1cb0f6;
+  border-bottom: 4px solid #1899d6;
+  color: #ffffff;
+  transition: all 0.1s ease-in-out;
+}
+.duo-btn-blue:hover {
+  background-color: #2bd0ff;
+}
+.duo-btn-blue:active {
+  border-bottom-width: 0px;
+  transform: translateY(4px);
+}
+
+.duo-btn-amber {
+  background-color: #ffc800;
+  border-bottom: 4px solid #e5a500;
+  color: #794d00;
+  transition: all 0.1s ease-in-out;
+}
+.duo-btn-amber:hover {
+  background-color: #ffd426;
+}
+.duo-btn-amber:active {
+  border-bottom-width: 0px;
+  transform: translateY(4px);
+}
+
+.duo-btn-white {
+  background-color: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-bottom: 4px solid #cbd5e1;
+  color: #334155;
+  transition: all 0.1s ease-in-out;
+}
+.duo-btn-white:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  border-bottom-color: #94a3b8;
+}
+.duo-btn-white:active {
+  border-bottom-width: 2px;
+  transform: translateY(2px);
+}
+
+.duo-btn-red {
+  background-color: #ff4b4b;
+  border-bottom: 4px solid #ea2b2b;
+  color: #ffffff;
+  transition: all 0.1s ease-in-out;
+}
+.duo-btn-red:hover {
+  background-color: #ff5e5e;
+}
+.duo-btn-red:active {
+  border-bottom-width: 0px;
+  transform: translateY(4px);
+}
+
+.duo-btn-orange {
+  background-color: #ff9600;
+  border-bottom: 4px solid #e07a00;
+  color: #ffffff;
+  transition: all 0.1s ease-in-out;
+}
+.duo-btn-orange:hover {
+  background-color: #ffa726;
+}
+.duo-btn-orange:active {
+  border-bottom-width: 0px;
+  transform: translateY(4px);
+}
+
+.duo-btn-purple {
+  background-color: #a855f7;
+  border-bottom: 4px solid #7e22ce;
+  color: #ffffff;
+  transition: all 0.1s ease-in-out;
+}
+.duo-btn-purple:hover {
+  background-color: #c084fc;
+}
+.duo-btn-purple:active {
+  border-bottom-width: 0px;
+  transform: translateY(4px);
+}
+
+.duo-btn-teal {
+  background-color: #0d9488;
+  border-bottom: 4px solid #115e59;
+  color: #ffffff;
+  transition: all 0.1s ease-in-out;
+}
+.duo-btn-teal:hover {
+  background-color: #14b8a6;
+}
+.duo-btn-teal:active {
+  border-bottom-width: 0px;
+  transform: translateY(4px);
 }

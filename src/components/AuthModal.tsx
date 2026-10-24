@@ -62,16 +62,18 @@ export const AuthModal: React.FC = () => {
           </h2>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl mb-5">
+        {/* Tab Switcher - Duolingo Segmented Style */}
+        <div className="grid grid-cols-2 p-1.5 bg-slate-100 rounded-2xl mb-5 gap-1.5 border-2 border-slate-200">
           <button
             type="button"
             onClick={() => {
               setIsSignUp(false)
               setError(null)
             }}
-            className={`py-2 text-xs font-black rounded-xl transition-all cursor-pointer ${
-              !isSignUp ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+            className={`py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${
+              !isSignUp
+                ? 'bg-white text-slate-900 border-2 border-slate-200 border-b-4 border-b-slate-300 shadow-xs'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             Sign In
@@ -82,8 +84,10 @@ export const AuthModal: React.FC = () => {
               setIsSignUp(true)
               setError(null)
             }}
-            className={`py-2 text-xs font-black rounded-xl transition-all cursor-pointer ${
-              isSignUp ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+            className={`py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${
+              isSignUp
+                ? 'bg-white text-slate-900 border-2 border-slate-200 border-b-4 border-b-slate-300 shadow-xs'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             Create Account
@@ -92,7 +96,7 @@ export const AuthModal: React.FC = () => {
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+          <div className="mb-4 p-3 rounded-2xl bg-rose-50 border-2 border-rose-200 border-b-4 border-b-rose-300 text-rose-700 text-xs font-black flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -112,7 +116,7 @@ export const AuthModal: React.FC = () => {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder={isSignUp ? 'e.g. city_mayor' : 'Username or email'}
-                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-2 pl-10 pr-3.5 text-xs font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-2.5 pl-10 pr-3.5 text-xs font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100 transition-all"
               />
             </div>
           </div>
@@ -130,7 +134,7 @@ export const AuthModal: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="mayor@tampere.fi"
-                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-2 pl-10 pr-3.5 text-xs font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-2.5 pl-10 pr-3.5 text-xs font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100 transition-all"
                 />
               </div>
             </div>
@@ -148,22 +152,23 @@ export const AuthModal: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-2 pl-10 pr-3.5 text-xs font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-2.5 pl-10 pr-3.5 text-xs font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100 transition-all"
               />
             </div>
           </div>
 
+          {/* Duolingo 3D Primary Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-8 py-3 px-4 rounded-2xl font-black text-xs text-white bg-emerald-600 hover:bg-emerald-500 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+            className="w-full mt-8 py-3 px-4 rounded-2xl font-black text-xs text-white duo-btn-green flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50 uppercase tracking-wider select-none"
           >
             {loading ? (
               <span>Loading...</span>
             ) : (
               <>
                 <span>{isSignUp ? 'Create Official Profile' : 'Sign In to Council'}</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 stroke-[3]" />
               </>
             )}
           </button>
@@ -175,7 +180,7 @@ export const AuthModal: React.FC = () => {
             type="button"
             onClick={handleGuest}
             disabled={loading}
-            className="text-xs font-bold text-slate-500 hover:text-emerald-700 underline underline-offset-4 decoration-slate-300 hover:decoration-emerald-500 transition-colors cursor-pointer disabled:opacity-50"
+            className="text-xs font-black text-slate-400 hover:text-emerald-700 underline underline-offset-4 decoration-slate-300 hover:decoration-emerald-500 transition-colors cursor-pointer disabled:opacity-50 uppercase tracking-wider"
           >
             Enter Demo Mode
           </button>

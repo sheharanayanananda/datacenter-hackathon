@@ -131,10 +131,10 @@ export const PermitStampModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleStamp}
-                className="px-6 py-3 bg-red-600 hover:bg-red-500 border-2 border-red-700 border-b-4 active:border-b-2 active:translate-y-[2px] text-white font-black text-xs rounded-2xl shadow-lg flex items-center gap-2 cursor-pointer transition-all select-none animate-bounce"
+                className="px-7 py-3.5 duo-btn-red text-white font-black text-xs rounded-2xl shadow-xl flex items-center gap-2 cursor-pointer transition-all select-none animate-bounce uppercase tracking-widest"
               >
-                <Award className="w-4 h-4 stroke-[2.5]" />
-                <span>STAMP & APPROVE PROJECT</span>
+                <Award className="w-5 h-5 stroke-[3]" />
+                <span>Stamp & Approve Project</span>
               </button>
             ) : (
               <div className="px-5 py-2.5 border-4 border-red-600 rounded-2xl text-red-600 font-black tracking-widest uppercase transform -rotate-2 shadow-md bg-red-50 animate-in zoom-in-75 duration-200 flex flex-col items-center select-none">

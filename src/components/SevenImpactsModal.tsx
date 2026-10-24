@@ -46,7 +46,7 @@ export const SevenImpactsModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/60 backdrop-blur-sm pointer-events-auto animate-in fade-in duration-200">
-      <div className="w-full max-w-4xl bg-white border-4 border-white rounded-[32px] shadow-2xl p-5 sm:p-7 text-slate-800 relative overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="w-full max-w-5xl bg-white border-4 border-white rounded-[32px] shadow-2xl p-5 sm:p-7 text-slate-800 relative overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
@@ -54,15 +54,10 @@ export const SevenImpactsModal: React.FC = () => {
               <BarChart3 className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-black text-slate-900">
-                  Data Center City Impacts
-                </h2>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  7 Core Dimensions
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 font-medium">
+              <h2 className="text-lg sm:text-xl font-black text-slate-900">
+                Data Center City Impacts
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
                 Real-world simulation of regional energy, neighborhood heating, local jobs, and municipal taxes.
               </p>
             </div>
@@ -76,11 +71,25 @@ export const SevenImpactsModal: React.FC = () => {
           </button>
         </div>
 
-        {/* 7 Pills Navigation Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto py-3 border-b border-slate-100 scrollbar-none shrink-0">
+        {/* 7 Pills Navigation Bar - Duolingo 3D Button Style matching HUD Glance Widget Colors */}
+        <div className="flex items-center gap-2 overflow-x-auto py-3.5 border-b border-slate-100 scrollbar-none shrink-0 w-full justify-between">
           {IMPACT_DIMENSIONS.map((dim) => {
             const isSelected = dim.key === currentDimension.key
             const DimIcon = getDimensionIcon(dim.iconName)
+
+            // Distinct Duolingo 3D button class matching each respective glance widget theme
+            const getDuoThemeClass = (key: string) => {
+              switch (key) {
+                case 'energy': return 'duo-btn-amber'
+                case 'surroundings': return 'duo-btn-orange'
+                case 'jobs': return 'duo-btn-blue'
+                case 'transport': return 'duo-btn-purple'
+                case 'land_use': return 'duo-btn-green'
+                case 'safety': return 'duo-btn-red'
+                case 'future': return 'duo-btn-teal'
+                default: return 'duo-btn-green'
+              }
+            }
 
             return (
               <button
@@ -89,13 +98,13 @@ export const SevenImpactsModal: React.FC = () => {
                   setSelectedKey(dim.key)
                   setActiveImpactKey(dim.key)
                 }}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all cursor-pointer ${
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-2xl text-[11px] font-black whitespace-nowrap transition-all cursor-pointer select-none uppercase tracking-wider ${
                   isSelected
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                    ? getDuoThemeClass(dim.key)
+                    : 'duo-btn-white'
                 }`}
               >
-                <DimIcon className="w-3.5 h-3.5" />
+                <DimIcon className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>{dim.title.split(' ')[0]}</span>
               </button>
             )
@@ -126,7 +135,7 @@ export const SevenImpactsModal: React.FC = () => {
             <div className="shrink-0 bg-white px-3.5 py-1.5 rounded-xl border border-slate-200 text-center shadow-sm">
               <div className="text-[10px] uppercase font-bold text-slate-400">Current Facility</div>
               <div className="text-xs font-black text-emerald-600">
-                Level {level} {level === 3 ? '(Peak)' : ''}
+                Level {level}
               </div>
             </div>
           </div>
@@ -146,16 +155,10 @@ export const SevenImpactsModal: React.FC = () => {
                       : 'bg-white border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  {isCurrent && (
-                    <div className="absolute -top-2.5 right-4 bg-emerald-600 text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm">
-                      Active Facility Tier
-                    </div>
-                  )}
-
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                        Level {lvl} {lvl === 3 ? '(Peak)' : ''}
+                        Level {lvl}
                       </span>
                       <div className="text-right">
                         <span className="text-xs font-black text-emerald-700">
@@ -188,10 +191,10 @@ export const SevenImpactsModal: React.FC = () => {
 
         {/* Footer */}
         <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 shrink-0">
-          <span className="font-medium">Data based on Nordic municipal engineering specifications</span>
+          <span className="font-bold text-[11px]">Data based on Nordic municipal engineering specifications</span>
           <button
             onClick={handleClose}
-            className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-xl transition-all cursor-pointer text-xs"
+            className="px-5 py-2.5 duo-btn-green text-white font-black rounded-2xl transition-all cursor-pointer text-xs uppercase tracking-wider"
           >
             Close Inspector
           </button>

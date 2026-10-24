@@ -219,7 +219,7 @@ export const ModalDetails: React.FC<ModalDetailsProps> = ({
 
         <button
           onClick={onClose}
-          className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black transition-colors cursor-pointer"
+          className="w-full py-3 duo-btn-green text-white rounded-2xl text-xs font-black transition-colors cursor-pointer uppercase tracking-wider mt-2 select-none"
         >
           Close View
         </button>

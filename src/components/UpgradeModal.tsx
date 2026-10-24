@@ -57,7 +57,7 @@ export const UpgradeModal: React.FC = () => {
             </div>
             <div>
               <span className="text-[10px] font-black uppercase tracking-widest text-amber-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-200">
-                Peak Level 3 Reached
+                Level 3 Max Reached
               </span>
               <h3 className="text-xl font-black text-slate-900 mt-2">
                 Hyperscale Vision Complete!
@@ -69,7 +69,7 @@ export const UpgradeModal: React.FC = () => {
 
             <button
               onClick={() => setIsUpgradeModalOpen(false)}
-              className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-2xl text-xs transition-all cursor-pointer shadow-md"
+              className="px-6 py-3 text-white font-black rounded-2xl text-xs duo-btn-green cursor-pointer shadow-md uppercase tracking-wider"
             >
               Continue Managing Campus
             </button>
@@ -136,10 +136,10 @@ export const UpgradeModal: React.FC = () => {
                 type="button"
                 onClick={handleUpgrade}
                 disabled={!canAfford}
-                className="py-2.5 px-5 rounded-2xl font-black text-xs text-white bg-emerald-600 hover:bg-emerald-500 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                className="py-3 px-6 rounded-2xl font-black text-xs text-white duo-btn-green disabled:opacity-40 disabled:cursor-not-allowed shadow-md transition-all flex items-center gap-2 cursor-pointer uppercase tracking-wider"
               >
                 <span>Authorize Level {nextLevel} Expansion</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 stroke-[3]" />
               </button>
             </div>
           </div>

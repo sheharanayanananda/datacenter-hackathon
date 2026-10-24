@@ -62,7 +62,7 @@ export const WorldBubbles: React.FC<WorldBubblesProps> = ({
                       Data Center Facility
                     </h3>
                     <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">
-                      Level {level} {level === 3 ? '(Peak Hub)' : 'Online'}
+                      Level {level} {level === 3 ? '(Completed)' : 'Online'}
                     </span>
                   </div>
                 </div>
@@ -123,10 +123,10 @@ export const WorldBubbles: React.FC<WorldBubblesProps> = ({
 
                 <button
                   onClick={onOpenSevenEffects}
-                  className="w-full py-1.5 px-3 rounded-xl text-[11px] font-black text-white bg-slate-900 hover:bg-slate-800 active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                  className="w-full py-2.5 px-3 rounded-2xl text-[11px] font-black text-white duo-btn-green transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm uppercase tracking-wider select-none"
                 >
                   <span>Explore All 7 City Effects</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
                 </button>
               </div>
             </div>

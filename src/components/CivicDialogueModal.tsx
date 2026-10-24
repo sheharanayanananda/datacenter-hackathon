@@ -125,17 +125,17 @@ export const CivicDialogueModal: React.FC = () => {
             </p>
           </div>
 
-          {/* Center-Aligned 3 Control Buttons: Previous - Skip - Next */}
-          <div className="flex items-center justify-center gap-2.5 sm:gap-3 pt-3 border-t border-amber-100 mt-2">
+          {/* Center-Aligned 3 Control Buttons: Previous - Skip - Next in Duolingo 3D style */}
+          <div className="flex items-center justify-center gap-2.5 sm:gap-3.5 pt-3.5 border-t-2 border-amber-100/80 mt-2">
             
             {/* 1. Previous Button */}
             <button
               type="button"
               onClick={handlePrev}
               disabled={isFirstLine}
-              className="py-2 px-4 rounded-xl font-black text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 border-b-4 active:border-b-2 active:translate-y-[2px] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed select-none"
+              className="py-2.5 px-4 rounded-2xl font-black text-xs duo-btn-white flex items-center gap-1.5 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed select-none uppercase tracking-wider"
             >
-              <ArrowLeft className="w-3.5 h-3.5 stroke-[2.5]" />
+              <ArrowLeft className="w-4 h-4 stroke-[3]" />
               <span>Previous</span>
             </button>
 
@@ -143,9 +143,9 @@ export const CivicDialogueModal: React.FC = () => {
             <button
               type="button"
               onClick={closeCivilianDialogue}
-              className="py-2 px-4 rounded-xl font-bold text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all flex items-center gap-1 cursor-pointer select-none"
+              className="py-2.5 px-4 rounded-2xl font-black text-xs text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all flex items-center gap-1 cursor-pointer select-none uppercase tracking-wider"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4 stroke-[2.5]" />
               <span>Skip</span>
             </button>
 
@@ -153,17 +153,17 @@ export const CivicDialogueModal: React.FC = () => {
             <button
               type="button"
               onClick={handleNext}
-              className="py-2 px-5 rounded-xl font-black text-xs text-white bg-emerald-600 hover:bg-emerald-500 border-2 border-emerald-700 border-b-4 active:border-b-2 active:translate-y-[2px] transition-all flex items-center gap-1.5 cursor-pointer shadow-md select-none"
+              className="py-2.5 px-6 rounded-2xl font-black text-xs text-white duo-btn-green flex items-center gap-2 cursor-pointer shadow-md select-none uppercase tracking-wider"
             >
               {isLastLine ? (
                 <>
-                  <span>Finish</span>
+                  <span>Understand & Continue</span>
                   <Check className="w-4 h-4 stroke-[3]" />
                 </>
               ) : (
                 <>
-                  <span>Next</span>
-                  <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Next Response</span>
+                  <ArrowRight className="w-4 h-4 stroke-[3]" />
                 </>
               )}
             </button>
