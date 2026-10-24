@@ -1,0 +1,240 @@
+import express from 'express'
+import cors from 'cors'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import { db, userQueries, saveQueries } from './db.js'
+
+const app = express()
+const PORT = process.env.PORT || 3001
+const JWT_SECRET = process.env.JWT_SECRET || 'nordic-datacenter-secret-key-2026'
+
+app.use(cors())
+app.use(express.json())
+
+// Auth middleware to extract & verify JWT
+const authenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' })
+  }
+
+  const token = authHeader.split(' ')[1]
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET)
+    req.user = decoded
+    next()
+  } catch (err) {
+    return res.status(401).json({ error: 'Unauthorized: Token expired or invalid' })
+  }
+}
+
+// 1. Healthcheck
+app.get('/api/health', (req, res) => {
+  try {
+    const row = db.prepare('SELECT 1 as test').get()
+    res.json({ status: 'ok', db: row.test === 1 ? 'connected' : 'error', timestamp: new Date().toISOString() })
+  } catch (err) {
+    res.status(500).json({ status: 'error', error: err.message })
+  }
+})
+
+// 2. Sign Up
+app.post('/api/auth/signup', (req, res) => {
+  try {
+    const { username, email, password, role } = req.body
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Username, email, and password are required' })
+    }
+
+    const cleanUsername = username.trim().toLowerCase()
+    const cleanEmail = email.trim().toLowerCase()
+
+    if (userQueries.findByUsername.get(cleanUsername)) {
+      return res.status(409).json({ error: 'Username already taken' })
+    }
+    if (userQueries.findByEmail.get(cleanEmail)) {
+      return res.status(409).json({ error: 'Email already registered' })
+    }
+
+    const salt = bcrypt.genSaltSync(10)
+    const passwordHash = bcrypt.hashSync(password, salt)
+    const assignedRole = role || 'Municipal Climate Director'
+
+    const info = userQueries.create.run(cleanUsername, cleanEmail, passwordHash, assignedRole)
+    const userId = Number(info.lastInsertRowid)
+
+    // Create initial game save
+    saveQueries.createInitialSave.run(userId)
+
+    const user = {
+      id: userId,
+      username: cleanUsername,
+      email: cleanEmail,
+      role: assignedRole,
+    }
+
+    const save = saveQueries.findByUserId.get(userId)
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' })
+
+    res.status(201).json({ token, user, save })
+  } catch (err) {
+    console.error('Signup error:', err)
+    res.status(500).json({ error: 'Failed to create account: ' + err.message })
+  }
+})
+
+// 3. Sign In
+app.post('/api/auth/signin', (req, res) => {
+  try {
+    const { identifier, password } = req.body
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'Username/Email and password are required' })
+    }
+
+    const cleanIdentifier = identifier.trim().toLowerCase()
+    let userRow = userQueries.findByUsername.get(cleanIdentifier)
+    if (!userRow) {
+      userRow = userQueries.findByEmail.get(cleanIdentifier)
+    }
+
+    if (!userRow) {
+      return res.status(401).json({ error: 'Invalid username or password' })
+    }
+
+    const isMatch = bcrypt.compareSync(password, userRow.password_hash)
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid username or password' })
+    }
+
+    userQueries.updateLastLogin.run(userRow.id)
+    const save = saveQueries.findByUserId.get(userRow.id)
+
+    const user = {
+      id: userRow.id,
+      username: userRow.username,
+      email: userRow.email,
+      role: userRow.role,
+    }
+
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' })
+
+    res.json({ token, user, save })
+  } catch (err) {
+    console.error('Signin error:', err)
+    res.status(500).json({ error: 'Failed to sign in: ' + err.message })
+  }
+})
+
+// 4. Quick Guest Mayor Access (For Evaluators & Hackathon Judges)
+app.post('/api/auth/guest', (req, res) => {
+  try {
+    const guestUsername = 'guest_mayor'
+    let userRow = userQueries.findByUsername.get(guestUsername)
+
+    if (!userRow) {
+      const salt = bcrypt.genSaltSync(8)
+      const passwordHash = bcrypt.hashSync('nordic2026', salt)
+      const info = userQueries.create.run(guestUsername, 'guest@tampere.fi', passwordHash, 'Guest Municipal Mayor')
+      const userId = Number(info.lastInsertRowid)
+      saveQueries.createInitialSave.run(userId)
+      userRow = userQueries.findById.get(userId)
+    }
+
+    const save = saveQueries.findByUserId.get(userRow.id)
+    const user = {
+      id: userRow.id,
+      username: userRow.username,
+      email: userRow.email,
+      role: userRow.role,
+    }
+
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' })
+    res.json({ token, user, save })
+  } catch (err) {
+    console.error('Guest login error:', err)
+    res.status(500).json({ error: 'Failed to create guest session: ' + err.message })
+  }
+})
+
+// 5. Get Current User Profile
+app.get('/api/auth/me', authenticate, (req, res) => {
+  try {
+    const user = userQueries.findById.get(req.user.id)
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+    const save = saveQueries.findByUserId.get(req.user.id)
+    res.json({ user, save })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// 6. Get Game Save
+app.get('/api/game/save', authenticate, (req, res) => {
+  try {
+    let save = saveQueries.findByUserId.get(req.user.id)
+    if (!save) {
+      saveQueries.createInitialSave.run(req.user.id)
+      save = saveQueries.findByUserId.get(req.user.id)
+    }
+    res.json({ save })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// 7. Update Game Save (Auto-Save / Milestone Save)
+app.put('/api/game/save', authenticate, (req, res) => {
+  try {
+    const characterId = req.body.characterId ?? req.body.character_id
+    const gameStage = req.body.gameStage ?? req.body.game_stage
+    const level = req.body.level
+    const money = req.body.money
+    const xp = req.body.xp
+    const xpNeeded = req.body.xpNeeded ?? req.body.xp_needed
+    const permitApproved = req.body.permitApproved ?? req.body.permit_approved
+    const permitApprovedAt = req.body.permitApprovedAt ?? req.body.permit_approved_at
+    const storyDialogSeen = req.body.storyDialogSeen ?? req.body.story_dialog_seen
+    const unlockedImpacts = req.body.unlockedImpacts ?? req.body.unlocked_impacts
+    const addedPlaytimeSeconds = req.body.addedPlaytimeSeconds ?? req.body.added_playtime_seconds ?? 0
+
+    saveQueries.updateSave.run(
+      characterId !== undefined ? characterId : null,
+      gameStage !== undefined ? gameStage : null,
+      level !== undefined ? level : null,
+      money !== undefined ? money : null,
+      xp !== undefined ? xp : null,
+      xpNeeded !== undefined ? xpNeeded : null,
+      permitApproved !== undefined ? (permitApproved ? 1 : 0) : null,
+      permitApprovedAt !== undefined ? permitApprovedAt : null,
+      storyDialogSeen !== undefined ? (storyDialogSeen ? 1 : 0) : null,
+      unlockedImpacts !== undefined ? JSON.stringify(unlockedImpacts) : null,
+      addedPlaytimeSeconds,
+      req.user.id
+    )
+
+    const updated = saveQueries.findByUserId.get(req.user.id)
+    res.json({ success: true, save: updated })
+  } catch (err) {
+    console.error('Update save error:', err)
+    res.status(500).json({ error: 'Failed to update save: ' + err.message })
+  }
+})
+
+// 8. Reset Game Save
+app.post('/api/game/reset', authenticate, (req, res) => {
+  try {
+    saveQueries.resetSave.run(req.user.id)
+    const reset = saveQueries.findByUserId.get(req.user.id)
+    res.json({ success: true, save: reset })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`⚡ [Nordic EcoTown API] Server running on http://localhost:${PORT}`)
+  console.log(`🗄️ [SQLite] Database initialized at ecotown.db`)
+})

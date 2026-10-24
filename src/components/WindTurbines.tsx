@@ -58,7 +58,7 @@ const TurbineInstance: React.FC<TurbineInstanceProps> = ({
   )
 }
 
-export const WindTurbines: React.FC = () => {
+export const WindTurbines: React.FC<{ level?: number }> = ({ level = 3 }) => {
   const gltf = useGLTF(MODEL_PATH)
 
   // Dedicated pure white PBR material for the stand (tower pole & nacelle housing)
@@ -151,7 +151,7 @@ export const WindTurbines: React.FC = () => {
 
   return (
     <group>
-      {/* Wind Turbines in the South-East corner with ample spacing and turned around facing away from datacenter */}
+      {/* Wind Turbines in the South-East corner: Level 1 has 1, Level 2 has 2, Level 3 has 3 */}
       <TurbineInstance
         position={[11.0, 0, 9.5]}
         scale={1.8}
@@ -163,28 +163,32 @@ export const WindTurbines: React.FC = () => {
         towerMaterial={towerMaterial}
         rotorMaterial={rotorMaterial}
       />
-      <TurbineInstance
-        position={[18.5, 0, 11.5]}
-        scale={1.75}
-        speedMultiplier={1.12}
-        rotation={2.80}
-        initialRotation={1.9}
-        towerGeom={towerGeom}
-        rotorGeom={rotorGeom}
-        towerMaterial={towerMaterial}
-        rotorMaterial={rotorMaterial}
-      />
-      <TurbineInstance
-        position={[14.0, 0, 17.5]}
-        scale={1.85}
-        speedMultiplier={0.92}
-        rotation={2.60}
-        initialRotation={3.7}
-        towerGeom={towerGeom}
-        rotorGeom={rotorGeom}
-        towerMaterial={towerMaterial}
-        rotorMaterial={rotorMaterial}
-      />
+      {level >= 2 && (
+        <TurbineInstance
+          position={[18.5, 0, 11.5]}
+          scale={1.75}
+          speedMultiplier={1.12}
+          rotation={2.80}
+          initialRotation={1.9}
+          towerGeom={towerGeom}
+          rotorGeom={rotorGeom}
+          towerMaterial={towerMaterial}
+          rotorMaterial={rotorMaterial}
+        />
+      )}
+      {level >= 3 && (
+        <TurbineInstance
+          position={[14.0, 0, 17.5]}
+          scale={1.85}
+          speedMultiplier={0.92}
+          rotation={2.60}
+          initialRotation={3.7}
+          towerGeom={towerGeom}
+          rotorGeom={rotorGeom}
+          towerMaterial={towerMaterial}
+          rotorMaterial={rotorMaterial}
+        />
+      )}
     </group>
   )
 }

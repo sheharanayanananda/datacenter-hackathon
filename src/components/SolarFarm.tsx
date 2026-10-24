@@ -5,7 +5,7 @@ import { useGLTF } from '@react-three/drei'
 // Preload Kenney industrial solar panel models
 useGLTF.preload('/assets/models/industrial/solar-panel-landscape-group.glb')
 
-export const SolarFarm: React.FC = () => {
+export const SolarFarm: React.FC<{ level?: number }> = ({ level = 3 }) => {
   const landscapeGroupGLTF = useGLTF('/assets/models/industrial/solar-panel-landscape-group.glb')
 
   // Clone template scene graph with shadows enabled
@@ -25,17 +25,22 @@ export const SolarFarm: React.FC = () => {
     return Array.from({ length: 12 }, () => landscapeScene.clone(true))
   }, [landscapeScene])
 
-  // 6 rows along Z with generous 1.8-unit spacing, spanning from z = -13.5 to -3.5 to match the 2x2 datacenter grid
+  // Level 1: 0 rows (no solar panels)
+  // Level 2: 3 rows (6 panels - some solar panels)
+  // Level 3: 6 rows (12 panels - peak)
   const rows = useMemo(() => {
+    if (level === 1) return []
+    if (level === 2) return [-11.2, -9.4, -7.6]
     return [-13.0, -11.2, -9.4, -7.6, -5.8, -4.0]
-  }, [])
+  }, [level])
 
-  // 2 columns along X, comfortably on the lawn between the lake and the road (road at x = 6.0)
   const columns = [2.2, 4.2]
+
+  if (level === 1 || rows.length === 0) return null
 
   return (
     <group>
-      {/* Solar Panel Array sitting directly on the grass with increased spacing */}
+      {/* Solar Panel Array: hidden at Level 1, partial at Level 2, full at Level 3 */}
       {rows.map((z, rowIdx) =>
         columns.map((x, colIdx) => {
           const index = rowIdx * columns.length + colIdx

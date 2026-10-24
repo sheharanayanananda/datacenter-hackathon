@@ -22,6 +22,7 @@ interface SceneProps {
   setDataCenterHovered: (h: boolean) => void;
   controlMode?: 'pan' | 'rotate';
   recenterTrigger?: number;
+  level?: number;
 }
 
 // Bounding box limits for camera target to keep focus strictly within the designed world
@@ -150,6 +151,7 @@ export const Scene: React.FC<SceneProps> = ({
   setDataCenterHovered,
   controlMode = 'pan',
   recenterTrigger = 0,
+  level = 3,
 }) => {
   const controlsRef = useRef<any>(null)
   const dirLightRef = useRef<THREE.DirectionalLight>(null)
@@ -247,10 +249,10 @@ export const Scene: React.FC<SceneProps> = ({
           <NasineulaTower position={[-5.0, 0, -6.0]} />
 
           {/* 4. Power Generation Infrastructure (South-East Wind Turbines) */}
-          <WindTurbines />
+          <WindTurbines level={level} />
 
-          {/* 5. Central 2x2 Data Center Campus Cluster */}
-          {/* South-West Facility */}
+          {/* 5. Central Data Center Campus: Level 1 has 1 DC; Levels 2 & 3 have all 4 */}
+          {/* South-West Facility (Primary lot, always active) */}
           <DataCenter
             position={[10.0, 0, -5.5]}
             isSelected={dataCenterHovered}
@@ -258,32 +260,38 @@ export const Scene: React.FC<SceneProps> = ({
             onClick={() => onOpenDetails('overview')}
           />
 
-          {/* South-East Facility */}
-          <DataCenter
-            position={[16.0, 0, -5.5]}
-            isSelected={dataCenterHovered}
-            onHover={setDataCenterHovered}
-            onClick={() => onOpenDetails('overview')}
-          />
+          {/* South-East Facility (Activated in Level 2 & 3) */}
+          {level >= 2 && (
+            <DataCenter
+              position={[16.0, 0, -5.5]}
+              isSelected={dataCenterHovered}
+              onHover={setDataCenterHovered}
+              onClick={() => onOpenDetails('overview')}
+            />
+          )}
 
-          {/* North-West Facility */}
-          <DataCenter
-            position={[10.0, 0, -11.5]}
-            isSelected={dataCenterHovered}
-            onHover={setDataCenterHovered}
-            onClick={() => onOpenDetails('overview')}
-          />
+          {/* North-West Facility (Activated in Level 2 & 3) */}
+          {level >= 2 && (
+            <DataCenter
+              position={[10.0, 0, -11.5]}
+              isSelected={dataCenterHovered}
+              onHover={setDataCenterHovered}
+              onClick={() => onOpenDetails('overview')}
+            />
+          )}
 
-          {/* North-East Facility */}
-          <DataCenter
-            position={[16.0, 0, -11.5]}
-            isSelected={dataCenterHovered}
-            onHover={setDataCenterHovered}
-            onClick={() => onOpenDetails('overview')}
-          />
+          {/* North-East Facility (Activated in Level 2 & 3) */}
+          {level >= 2 && (
+            <DataCenter
+              position={[16.0, 0, -11.5]}
+              isSelected={dataCenterHovered}
+              onHover={setDataCenterHovered}
+              onClick={() => onOpenDetails('overview')}
+            />
+          )}
 
-          {/* 5b. Dedicated Solar Microgrid Farm */}
-          <SolarFarm />
+          {/* 5b. Dedicated Solar Microgrid Farm (Level 1: none, Level 2: some, Level 3: full) */}
+          <SolarFarm level={level} />
 
           {/* 6. Carpark (Attached East of Datacenter) */}
           <Carpark />
@@ -291,8 +299,8 @@ export const Scene: React.FC<SceneProps> = ({
           {/* 7. Nordic Residential Houses (South-West Quadrant) */}
           <NordicHouses onSelectHouse={onSelectHouse} />
 
-          {/* 8. Animated Road Traffic */}
-          <Traffic />
+          {/* 8. Animated Road Traffic (scaled by Level) */}
+          <Traffic level={level} />
 
           {/* 9. 3D Pinned Speech Bubble UI on Data Center */}
           <DataCenterCard

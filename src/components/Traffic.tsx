@@ -75,7 +75,7 @@ interface VehicleRuntime {
   customCurve: THREE.CatmullRomCurve3 | null;
 }
 
-export const Traffic: React.FC = () => {
+export const Traffic: React.FC<{ level?: number }> = ({ level = 3 }) => {
   // 1. Build the precise road-center loop curve encircling the 2x2 Datacenter campus and residential quarter
   const loopCurve = useMemo(() => {
     const pts: THREE.Vector3[] = [
@@ -516,9 +516,12 @@ export const Traffic: React.FC = () => {
     })
   })
 
+  // Filter visible vehicle count based on Level (Level 1: 2, Level 2: 4, Level 3: all)
+  const vehicleLimit = level === 1 ? 2 : level === 2 ? 4 : vehiclesRef.current.length
+
   return (
     <group>
-      {vehiclesRef.current.map((veh, idx) => (
+      {vehiclesRef.current.slice(0, vehicleLimit).map((veh, idx) => (
         <group
           key={veh.id}
           ref={(el) => {

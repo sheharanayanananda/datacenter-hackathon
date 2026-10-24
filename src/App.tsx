@@ -1,20 +1,28 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { GameProvider, useGame } from './context/GameContext'
 import { Scene } from './components/Scene'
 import { HUD } from './components/HUD'
 import { ModalDetails } from './components/ModalDetails'
+import { AuthModal } from './components/AuthModal'
+import { CharacterSelectModal } from './components/CharacterSelectModal'
+import { PermitStampModal } from './components/PermitStampModal'
+import { StoryDialogueOverlay } from './components/StoryDialogueOverlay'
+import { SevenImpactsModal } from './components/SevenImpactsModal'
+import { UpgradeModal } from './components/UpgradeModal'
 import { CityStats, InspectionTab, HouseInfo } from './types'
 
-export const App: React.FC = () => {
-  const [stats, setStats] = useState<CityStats>({
-    money: 35871, // Matching reference image
-    level: 2,
-    xp: 25,
-    xpNeeded: 70, // Matching reference image 25/70
-    energyPercent: 88,
-    jobsCreated: 120,
-    greenEnergyMw: 14.5,
-    computingPowerPflops: 85,
-  })
+const AppContent: React.FC = () => {
+  const {
+    user,
+    level,
+    money,
+    xp,
+    xpNeeded,
+    gameStage,
+    setIsSevenImpactsOpen,
+    setActiveImpactKey,
+    setIsUpgradeModalOpen,
+  } = useGame()
 
   const [activeTab, setActiveTab] = useState<InspectionTab | 'build' | 'upgrade' | null>(null)
   const [selectedHouse, setSelectedHouse] = useState<HouseInfo | null>(null)
@@ -22,45 +30,31 @@ export const App: React.FC = () => {
   const [controlMode, setControlMode] = useState<'pan' | 'rotate'>('pan')
   const [recenterTrigger, setRecenterTrigger] = useState(0)
 
-  // Simulation loop: gentle passive earnings from clean cloud computing
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStats((prev) => ({
-        ...prev,
-        money: prev.money + 12,
-      }))
-    }, 2500)
-    return () => clearInterval(interval)
-  }, [])
-
-  const handleUpgradeWind = () => {
-    if (stats.money < 4500) return
-    setStats((prev) => ({
-      ...prev,
-      money: prev.money - 4500,
-      greenEnergyMw: Number((prev.greenEnergyMw + 2.5).toFixed(1)),
-      xp: Math.min(prev.xpNeeded, prev.xp + 15),
-      energyPercent: Math.min(100, prev.energyPercent + 5),
-    }))
-  }
-
-  const handleExpandServers = () => {
-    if (stats.money < 3200) return
-    setStats((prev) => ({
-      ...prev,
-      money: prev.money - 3200,
-      computingPowerPflops: prev.computingPowerPflops + 15,
-      xp: Math.min(prev.xpNeeded, prev.xp + 20),
-    }))
+  // Map contextual stats for HUD and existing inspection tabs
+  const stats: CityStats = {
+    money: Math.round(money),
+    level: level,
+    xp: xp,
+    xpNeeded: xpNeeded,
+    energyPercent: level === 1 ? 55 : level === 2 ? 88 : 100,
+    jobsCreated: level === 1 ? 20 : level === 2 ? 55 : 250,
+    greenEnergyMw: level === 1 ? 5.0 : level === 2 ? 37.5 : 120.0,
+    computingPowerPflops: level === 1 ? 15 : level === 2 ? 85 : 350,
   }
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-slate-900">
+    <div className="relative w-screen h-screen overflow-hidden bg-slate-900 select-none">
       {/* 3D Simulation Canvas */}
       <Scene
+        level={level}
         onOpenDetails={(tab) => {
           setSelectedHouse(null)
-          setActiveTab(tab)
+          if (tab === 'overview' || tab === 'energy' || tab === 'jobs') {
+            setActiveImpactKey(tab === 'overview' ? 'energy' : tab === 'energy' ? 'energy' : 'jobs')
+            setIsSevenImpactsOpen(true)
+          } else {
+            setActiveTab(tab)
+          }
         }}
         onSelectHouse={(house) => {
           setActiveTab(null)
@@ -72,27 +66,48 @@ export const App: React.FC = () => {
         recenterTrigger={recenterTrigger}
       />
 
-      {/* Gamified HUD Overlay */}
-      <HUD
-        stats={stats}
-        onBuildClick={() => {
-          setSelectedHouse(null)
-          setActiveTab('build')
-        }}
-        onUpgradeClick={() => {
-          setSelectedHouse(null)
-          setActiveTab('upgrade')
-        }}
-        onToggleMascot={() => {
-          setSelectedHouse(null)
-          setActiveTab('jobs')
-        }}
-        controlMode={controlMode}
-        onToggleControlMode={setControlMode}
-        onRecenter={() => setRecenterTrigger((c) => c + 1)}
-      />
+      {/* Gamified HUD Overlay (visible when user logged in) */}
+      {user && (
+        <HUD
+          stats={stats}
+          onBuildClick={() => {
+            setSelectedHouse(null)
+            setActiveTab('build')
+          }}
+          onUpgradeClick={() => {
+            setSelectedHouse(null)
+            setIsUpgradeModalOpen(true)
+          }}
+          onToggleMascot={() => {
+            setSelectedHouse(null)
+            setActiveImpactKey('future')
+            setIsSevenImpactsOpen(true)
+          }}
+          controlMode={controlMode}
+          onToggleControlMode={setControlMode}
+          onRecenter={() => setRecenterTrigger((c) => c + 1)}
+        />
+      )}
 
-      {/* Interactive Detail & Upgrade Modals */}
+      {/* 1. Sign In / Sign Up Modal */}
+      <AuthModal />
+
+      {/* 2. Character Select Modal */}
+      <CharacterSelectModal />
+
+      {/* 3. Official Municipal Permit Stamping Modal */}
+      <PermitStampModal />
+
+      {/* 4. Story Cutscene & Construction Duration Ticker */}
+      <StoryDialogueOverlay />
+
+      {/* 5. Hackathon 7 Core Impacts Explorer Modal */}
+      <SevenImpactsModal />
+
+      {/* 6. Level Upgrade Modal */}
+      <UpgradeModal />
+
+      {/* 7. Existing House Inspection & Microgrid Modal */}
       <ModalDetails
         tab={activeTab}
         selectedHouse={selectedHouse}
@@ -101,11 +116,20 @@ export const App: React.FC = () => {
           setActiveTab(null)
           setSelectedHouse(null)
         }}
-        onUpgradeWind={handleUpgradeWind}
+        onUpgradeWind={() => {}}
         onUpgradeSolar={() => {}}
-        onExpandServers={handleExpandServers}
+        onExpandServers={() => {}}
       />
     </div>
   )
 }
+
+export const App: React.FC = () => {
+  return (
+    <GameProvider>
+      <AppContent />
+    </GameProvider>
+  )
+}
+
 export default App
