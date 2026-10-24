@@ -47,21 +47,23 @@ export const Terrain: React.FC = () => {
       }
     }
 
-    // 1. Loop encircling the Datacenter
+    // 1. Loop encircling the 2x2 Datacenter campus cluster
     // North road of loop
-    addSegment(3.0, -3.5, 10.0, -3.5)
+    addSegment(6.0, -15.5, 20.0, -15.5)
     // East road of loop (between Datacenter & Carpark)
-    addSegment(10.0, -3.5, 10.0, 3.5)
+    addSegment(20.0, -15.5, 20.0, 4.5)
+    // Carpark driveway branch
+    addSegment(20.0, -8.5, 22.8, -8.5)
     // West road of loop
-    addSegment(3.0, -3.5, 3.0, 0.5)
+    addSegment(6.0, -15.5, 6.0, 0.5)
     // Connector road from West loop edge heading to Residential quarter
-    addSegment(3.0, 0.5, -6.0, 0.5)
+    addSegment(6.0, 0.5, -7.0, 0.5)
 
-    // 2. Main South East-West Avenue
-    addSegment(-11.0, 3.5, 10.0, 3.5)
+    // 2. Main South East-West Avenue (from x = -15.0 to 20.0 along z = 4.5)
+    addSegment(-15.0, 4.5, 20.0, 4.5)
 
-    // 3. Residential South Avenue
-    addSegment(-6.0, 0.5, -6.0, 8.5)
+    // 3. Residential South Avenue (extended to z = 11.5 at x = -7.0)
+    addSegment(-7.0, 0.5, -7.0, 11.5)
 
     const geom = new THREE.BufferGeometry()
     geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
@@ -97,7 +99,7 @@ export const Terrain: React.FC = () => {
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
       >
-        <planeGeometry args={[120, 120, 1, 1]} />
+        <planeGeometry args={[500, 500, 1, 1]} />
         <meshStandardMaterial
           color="#577943"
           roughness={0.85}
@@ -106,7 +108,7 @@ export const Terrain: React.FC = () => {
       </mesh>
 
       {/* 2. Lake Näsijärvi in the North-West (Top-Left) */}
-      <group position={[-8.5, 0.002, -18.0]}>
+      <group position={[-11.5, 0.002, -18.5]}>
         {/* Sandy / Pebble Shoreline Rim */}
         <mesh position={[0, 0.003, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <shapeGeometry args={[lakeShape]} />

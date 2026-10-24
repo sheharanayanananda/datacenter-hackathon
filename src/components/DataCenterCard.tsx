@@ -1,22 +1,18 @@
 import React from 'react'
 import { Html } from '@react-three/drei'
-import { Check, Zap, Flame, Users } from 'lucide-react'
+import { Check, Zap, Server, Users } from 'lucide-react'
 import { InspectionTab } from '../types'
 
 interface DataCenterCardProps {
   onOpenDetails: (tab: InspectionTab) => void;
-  heatActive: boolean;
-  onToggleHeat: () => void;
 }
 
 export const DataCenterCard: React.FC<DataCenterCardProps> = ({
   onOpenDetails,
-  heatActive,
-  onToggleHeat,
 }) => {
   return (
     <Html
-      position={[7.2, 2.5, 0.4]}
+      position={[10.8, 2.5, -5.1]}
       center
       distanceFactor={11}
       zIndexRange={[100, 0]}
@@ -53,7 +49,7 @@ export const DataCenterCard: React.FC<DataCenterCardProps> = ({
             </div>
           </div>
 
-          {/* Three Feature Cards */}
+          {/* Feature Cards */}
           <div className="grid grid-cols-3 gap-1.5 py-2.5">
             {/* 1. Energy */}
             <button
@@ -64,20 +60,20 @@ export const DataCenterCard: React.FC<DataCenterCardProps> = ({
                 <Zap className="w-5 h-5 fill-amber-950 stroke-none" />
               </div>
               <span className="font-extrabold text-[11px] text-amber-900 leading-tight">
-                Energy
+                Clean Energy
               </span>
             </button>
 
-            {/* 2. Heat Recycling */}
+            {/* 2. Overview / Computing */}
             <button
-              onClick={() => onOpenDetails('heat')}
-              className="group flex flex-col items-center justify-center p-2 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200/60 transition-all active:scale-95 text-center"
+              onClick={() => onOpenDetails('overview')}
+              className="group flex flex-col items-center justify-center p-2 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200/60 transition-all active:scale-95 text-center"
             >
-              <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-sm mb-1 group-hover:scale-110 transition-transform">
-                <Flame className="w-5 h-5 fill-white stroke-none" />
+              <div className="w-8 h-8 rounded-full bg-sky-500 text-white flex items-center justify-center shadow-sm mb-1 group-hover:scale-110 transition-transform">
+                <Server className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <span className="font-extrabold text-[11px] text-orange-950 leading-tight">
-                Heat Recycling
+              <span className="font-extrabold text-[11px] text-sky-950 leading-tight">
+                Servers
               </span>
             </button>
 
@@ -97,17 +93,10 @@ export const DataCenterCard: React.FC<DataCenterCardProps> = ({
 
           {/* Bottom Status Pill */}
           <div className="flex items-center justify-center pt-1">
-            <button
-              onClick={onToggleHeat}
-              className={`w-full py-1 px-3 rounded-full text-[12px] font-extrabold flex items-center justify-center gap-1.5 transition-all shadow-sm ${
-                heatActive
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/30'
-                  : 'bg-slate-400 hover:bg-slate-500 text-white'
-              }`}
-            >
-              <span className={`w-2 h-2 rounded-full ${heatActive ? 'bg-emerald-300 animate-ping' : 'bg-slate-200'}`} />
-              <span>{heatActive ? 'Heat Reuse: Active' : 'Heat Reuse: Paused'}</span>
-            </button>
+            <div className="w-full py-1 px-3 rounded-full text-[12px] font-extrabold flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow-sm shadow-emerald-500/30">
+              <span className="w-2 h-2 rounded-full bg-emerald-300 animate-ping" />
+              <span>Facility: 100% Operational</span>
+            </div>
           </div>
         </div>
 

@@ -1,21 +1,25 @@
 import React from 'react'
-import { Hammer, Settings, Flame, Smile, Zap, DollarSign } from 'lucide-react'
+import { Hammer, Settings, Smile, Zap, DollarSign } from 'lucide-react'
 import { CityStats } from '../types'
 
 interface HUDProps {
   stats: CityStats;
   onBuildClick: () => void;
   onUpgradeClick: () => void;
-  onToggleHeat: () => void;
   onToggleMascot: () => void;
+  controlMode?: 'pan' | 'rotate';
+  onToggleControlMode?: (mode: 'pan' | 'rotate') => void;
+  onRecenter?: () => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
   stats,
   onBuildClick,
   onUpgradeClick,
-  onToggleHeat,
   onToggleMascot,
+  controlMode = 'pan',
+  onToggleControlMode,
+  onRecenter,
 }) => {
   const xpPercent = Math.min(100, Math.round((stats.xp / stats.xpNeeded) * 100))
 
@@ -31,16 +35,49 @@ export const HUD: React.FC<HUDProps> = ({
               Nordic EcoTown <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/40">Simulation</span>
             </h1>
             <p className="text-[11px] font-medium text-slate-400">
-              Data Center Waste Heat to District Heating Network
+              Zero-Emission Data Center & Renewable Microgrid
             </p>
           </div>
         </div>
 
-        {/* Camera Control Hint */}
-        <div className="pointer-events-auto hidden md:flex items-center gap-2 bg-slate-900/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/50 text-xs text-slate-300">
-          <span>🖱️ Drag to rotate</span>
-          <span className="text-slate-500">•</span>
-          <span>Scroll to zoom</span>
+        {/* Camera Control Switcher & Shortcut Hints */}
+        <div className="pointer-events-auto flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-700/60 shadow-lg text-xs">
+          <button
+            onClick={() => onToggleControlMode?.('pan')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all ${
+              controlMode === 'pan'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+            title="Pan Mode: Left-drag or WASD / Arrow keys to glide across map"
+          >
+            <span>✋</span>
+            <span>Pan</span>
+          </button>
+          <button
+            onClick={() => onToggleControlMode?.('rotate')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all ${
+              controlMode === 'rotate'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+            title="Rotate Mode: Left-drag to orbit camera"
+          >
+            <span>🔄</span>
+            <span>Rotate</span>
+          </button>
+          <div className="h-4 w-px bg-slate-700/60 mx-0.5" />
+          <button
+            onClick={onRecenter}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 font-semibold transition-all"
+            title="Recenter camera on town"
+          >
+            <span>🎯</span>
+            <span className="hidden sm:inline">Center</span>
+          </button>
+          <span className="hidden xl:inline text-[11px] text-slate-400 pl-1 pr-1.5 border-l border-slate-700/60 ml-0.5">
+            WASD to pan • Scroll to zoom
+          </span>
         </div>
       </div>
 
@@ -95,18 +132,6 @@ export const HUD: React.FC<HUDProps> = ({
             </div>
 
             {/* Circular Quick Action Toggles */}
-            <button
-              onClick={onToggleHeat}
-              title="Toggle District Heating Flow"
-              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 shadow-game-button transition-transform active:scale-95 ${
-                stats.heatRecyclingActive
-                  ? 'bg-orange-500 border-orange-300 text-white'
-                  : 'bg-slate-700 border-slate-600 text-slate-400'
-              }`}
-            >
-              <Flame className="w-5 h-5 fill-current stroke-none" />
-            </button>
-
             <button
               onClick={onToggleMascot}
               title="Mascot Insights"

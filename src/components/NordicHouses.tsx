@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { useGLTF } from '@react-three/drei'
 import { HouseInfo } from '../types'
 
+// Industrial workshop model with centered pivot and aligned front entry
 const IndustrialHouseModel: React.FC<{
   scale?: number;
 }> = ({ scale = 1 }) => {
@@ -19,18 +20,19 @@ const IndustrialHouseModel: React.FC<{
     return clone
   }, [gltf])
 
+  const s = scale * 1.25
+
   return (
-    <group scale={[scale * 1.35, scale * 1.35, scale * 1.35]}>
-      <primitive object={clonedScene} />
-      {/* District Heating Inlet Connection Glow at Foundation */}
-      <mesh position={[0, 0.1, 0.55]}>
-        <sphereGeometry args={[0.07, 8, 8]} />
-        <meshStandardMaterial
-          color="#f97316"
-          emissive="#ea580c"
-          emissiveIntensity={1.8}
-        />
-      </mesh>
+    <group scale={[s, s, s]}>
+      {/* 
+        Kenney building-i.glb bounding box is [-0.95, 0, -0.38] to [0.08, 0.73, 0.92].
+        Center is at x = -0.43, z = +0.27.
+        Front facade (garage & double doors) faces -Z.
+        Offsetting by (+0.43, 0, -0.27) centers the model pivot perfectly!
+      */}
+      <group position={[0.43, 0, -0.27]}>
+        <primitive object={clonedScene} />
+      </group>
     </group>
   )
 }
@@ -38,139 +40,140 @@ const IndustrialHouseModel: React.FC<{
 export const NordicHouses: React.FC<{
   onSelectHouse?: (house: HouseInfo) => void;
 }> = ({ onSelectHouse }) => {
-  // Houses arranged in the South-West quadrant matching the user's architectural schematic
+  // Houses perfectly aligned to the street grid lines:
+  // - North row along z = 2.6 (all facing SOUTH towards Main Avenue z = 4.5)
+  // - South row along z = 6.4 (all facing NORTH towards Main Avenue z = 4.5)
+  // - South Street tail along z = 9.2 (facing EAST and WEST towards South Street x = -7.0)
   const houses: HouseInfo[] = useMemo(
     () => [
-      // --- NORTH RESIDENTIAL BLOCK (North of main horizontal road z = 3.4) ---
+      // =========================================================================
+      // NORTH ROW (Parallel to South Main Avenue at z = 2.6, facing South [rot = Math.PI])
+      // =========================================================================
+      // West of crossroad (x = -7.0)
       {
         id: 'house-nw-1',
         name: 'Eco Workshop A-1',
-        position: [-8.8, 0, 1.8],
-        rotation: 0,
+        position: [-13.5, 0, 2.6],
+        rotation: Math.PI,
         color: 'yellow',
         scale: 1.0,
-        heatConnected: true,
       },
       {
         id: 'house-nw-2',
         name: 'Eco Workshop A-2',
-        position: [-10.2, 0, 2.4],
-        rotation: 0,
+        position: [-11.0, 0, 2.6],
+        rotation: Math.PI,
         color: 'red',
         scale: 1.0,
-        heatConnected: true,
       },
       {
         id: 'house-nw-3',
         name: 'Eco Workshop A-3',
-        position: [-7.4, 0, 2.2],
-        rotation: 0,
+        position: [-8.8, 0, 2.6],
+        rotation: Math.PI,
         color: 'slate',
         scale: 1.0,
-        heatConnected: true,
       },
+      // East of crossroad (x = -7.0)
       {
         id: 'house-ne-1',
         name: 'Eco Workshop B-1',
-        position: [-4.6, 0, 1.8],
-        rotation: 0,
+        position: [-5.2, 0, 2.6],
+        rotation: Math.PI,
         color: 'brown',
         scale: 1.0,
-        heatConnected: true,
       },
       {
         id: 'house-ne-2',
         name: 'Eco Workshop B-2',
-        position: [-3.0, 0, 2.0],
-        rotation: 0,
+        position: [-3.0, 0, 2.6],
+        rotation: Math.PI,
         color: 'yellow',
         scale: 1.0,
-        heatConnected: true,
       },
       {
         id: 'house-ne-3',
         name: 'Eco Workshop B-3',
-        position: [-1.4, 0, 2.0],
-        rotation: 0,
+        position: [-0.8, 0, 2.6],
+        rotation: Math.PI,
         color: 'slate',
         scale: 1.0,
-        heatConnected: true,
       },
 
-      // --- SOUTH RESIDENTIAL BLOCK (South of main horizontal road z = 3.4) ---
+      // =========================================================================
+      // SOUTH ROW (Parallel to South Main Avenue at z = 6.4, facing North [rot = 0])
+      // =========================================================================
+      // West of crossroad (x = -7.0)
       {
         id: 'house-sw-1',
         name: 'Eco Workshop C-1',
-        position: [-10.2, 0, 4.8],
-        rotation: Math.PI,
+        position: [-13.5, 0, 6.4],
+        rotation: 0,
         color: 'red',
         scale: 1.0,
-        heatConnected: true,
       },
       {
         id: 'house-sw-2',
         name: 'Eco Workshop C-2',
-        position: [-8.8, 0, 4.8],
-        rotation: Math.PI,
+        position: [-11.0, 0, 6.4],
+        rotation: 0,
         color: 'yellow',
         scale: 1.0,
-        heatConnected: true,
       },
       {
         id: 'house-sw-3',
         name: 'Eco Workshop C-3',
-        position: [-7.4, 0, 4.8],
-        rotation: Math.PI,
+        position: [-8.8, 0, 6.4],
+        rotation: 0,
         color: 'slate',
         scale: 1.0,
-        heatConnected: true,
       },
+      // East of crossroad (x = -7.0)
       {
         id: 'house-se-1',
         name: 'Eco Workshop D-1',
-        position: [-4.6, 0, 4.8],
-        rotation: Math.PI,
+        position: [-5.2, 0, 6.4],
+        rotation: 0,
         color: 'red',
         scale: 1.0,
-        heatConnected: true,
       },
       {
         id: 'house-se-2',
         name: 'Eco Workshop D-2',
-        position: [-3.0, 0, 4.8],
-        rotation: Math.PI,
+        position: [-3.0, 0, 6.4],
+        rotation: 0,
         color: 'yellow',
         scale: 1.0,
-        heatConnected: true,
       },
       {
         id: 'house-se-3',
         name: 'Eco Workshop D-3',
-        position: [-1.4, 0, 4.8],
-        rotation: Math.PI,
+        position: [-0.8, 0, 6.4],
+        rotation: 0,
         color: 'slate',
         scale: 1.0,
-        heatConnected: true,
       },
 
-      // --- SOUTHERN TAIL RESIDENCES (Flanking South Street x = -6.0) ---
+      // =========================================================================
+      // SOUTHERN STREET TAIL (Flanking South Street x = -7.0 at z = 9.2)
+      // =========================================================================
+      // West of street: faces EAST into street [rot = -Math.PI / 2]
       {
         id: 'house-tail-1',
         name: 'Eco Workshop S-1',
-        position: [-7.4, 0, 7.2],
-        rotation: Math.PI / 2,
+        position: [-8.8, 0, 9.2],
+        rotation: -Math.PI / 2,
         color: 'yellow',
         scale: 1.0,
-        heatConnected: true,
       },
+      // East of street: faces WEST into street [rot = Math.PI / 2]
       {
         id: 'house-tail-2',
         name: 'Eco Workshop S-2',
-        position: [-4.6, 0, 7.2],
-        rotation: -Math.PI / 2,
+        position: [-5.2, 0, 9.2],
+        rotation: Math.PI / 2,
         color: 'red',
         scale: 1.0,
-        heatConnected: true,
       },
     ],
     []
@@ -189,8 +192,6 @@ export const NordicHouses: React.FC<{
           }}
         >
           <IndustrialHouseModel scale={house.scale} />
-
-
         </group>
       ))}
     </group>

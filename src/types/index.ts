@@ -4,14 +4,12 @@ export interface CityStats {
   xp: number;
   xpNeeded: number;
   energyPercent: number;
-  heatRecyclingActive: boolean;
   jobsCreated: number;
   greenEnergyMw: number;
-  heatOutputMwh: number;
-  housesHeated: number;
+  computingPowerPflops: number;
 }
 
-export type InspectionTab = 'overview' | 'energy' | 'heat' | 'jobs';
+export type InspectionTab = 'overview' | 'energy' | 'jobs';
 
 export interface HouseInfo {
   id: string;
@@ -19,6 +17,5 @@ export interface HouseInfo {
   rotation: number;
   color: 'yellow' | 'red' | 'slate' | 'brown';
   scale?: number;
-  heatConnected: boolean;
   name: string;
 }
