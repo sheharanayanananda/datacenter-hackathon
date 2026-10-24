@@ -379,7 +379,7 @@ export const Terrain: React.FC<{ onSelectLake?: () => void }> = ({ onSelectLake 
       >
         <meshStandardMaterial
           map={grassTexture}
-          roughness={0.9}
+          roughness={0.82}
           metalness={0.0}
         />
       </mesh>
@@ -396,7 +396,7 @@ export const Terrain: React.FC<{ onSelectLake?: () => void }> = ({ onSelectLake 
         <mesh geometry={shoreGeom} receiveShadow>
           <meshStandardMaterial
             color="#dfc98c"
-            roughness={0.92}
+            roughness={0.88}
             flatShading
             side={THREE.DoubleSide}
           />
@@ -410,15 +410,15 @@ export const Terrain: React.FC<{ onSelectLake?: () => void }> = ({ onSelectLake 
           receiveShadow
         >
           <meshStandardMaterial
-            color="#0284c7"
-            roughness={0.92}
+            color="#0369a1"
+            roughness={0.8}
             metalness={0.05}
             flatShading
             side={THREE.DoubleSide}
           />
         </mesh>
 
-        {/* Layer C: Authentic Faceted 3D Water Wave Surface from low_poly_water */}
+        {/* Layer C: Authentic Crystalline Water Wave Surface with Specular Sunlight Glints */}
         {lowPolyWaterGeom && (
           <mesh
             ref={waterRef}
@@ -426,12 +426,12 @@ export const Terrain: React.FC<{ onSelectLake?: () => void }> = ({ onSelectLake 
             receiveShadow
           >
             <meshStandardMaterial
-              color="#00ffff" // Cyan turquoise water
-              roughness={0.835}
-              metalness={0.15}
+              color="#0284c7"
+              roughness={0.08}
+              metalness={0.12}
               flatShading
               transparent
-              opacity={0.8}
+              opacity={0.84}
               side={THREE.DoubleSide}
             />
           </mesh>
@@ -440,27 +440,27 @@ export const Terrain: React.FC<{ onSelectLake?: () => void }> = ({ onSelectLake 
         {/* Scenic Archipelago Islet 1: Deep Rock Base + Grass Cap */}
         <mesh position={[-4.5, -0.6, 1.6]} receiveShadow castShadow>
           <cylinderGeometry args={[1.0, 1.5, 1.3, 7]} />
-          <meshStandardMaterial color="#64748b" roughness={0.9} flatShading />
+          <meshStandardMaterial color="#64748b" roughness={0.82} flatShading />
         </mesh>
         <mesh position={[-4.5, 0.08, 1.6]} receiveShadow castShadow>
           <cylinderGeometry args={[0.9, 1.1, 0.12, 7]} />
-          <meshStandardMaterial color="#44934c" roughness={0.85} flatShading />
+          <meshStandardMaterial color="#44934c" roughness={0.78} flatShading />
         </mesh>
 
         {/* Scenic Archipelago Islet 2: Deep Rock Base + Grass Cap */}
         <mesh position={[2.8, -0.6, -2.4]} receiveShadow castShadow>
           <cylinderGeometry args={[0.8, 1.3, 1.3, 6]} />
-          <meshStandardMaterial color="#64748b" roughness={0.9} flatShading />
+          <meshStandardMaterial color="#64748b" roughness={0.82} flatShading />
         </mesh>
         <mesh position={[2.8, 0.08, -2.4]} receiveShadow castShadow>
           <cylinderGeometry args={[0.7, 0.9, 0.12, 6]} />
-          <meshStandardMaterial color="#44934c" roughness={0.85} flatShading />
+          <meshStandardMaterial color="#44934c" roughness={0.78} flatShading />
         </mesh>
       </group>
 
       {/* 3. Road Foundation Underbed */}
       <mesh geometry={roadGeometry} receiveShadow>
-        <meshStandardMaterial color="#515566" roughness={0.8} />
+        <meshStandardMaterial color="#334155" roughness={0.75} />
       </mesh>
     </group>
   )

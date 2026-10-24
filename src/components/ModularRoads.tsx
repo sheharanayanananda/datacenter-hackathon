@@ -73,8 +73,11 @@ const InstancedBulbs: React.FC<{ lights: LightDef[] }> = ({ lights }) => {
   const bulbGeom = useMemo(() => new THREE.SphereGeometry(0.038, 8, 8), [])
   const bulbMat = useMemo(
     () =>
-      new THREE.MeshBasicMaterial({
+      new THREE.MeshStandardMaterial({
         color: '#fef3c7',
+        emissive: '#fbbf24',
+        emissiveIntensity: 2.0,
+        roughness: 0.1,
       }),
     []
   )
@@ -111,6 +114,30 @@ export const ModularRoads: React.FC = () => {
   const intersectionMesh = useMemo(() => getMesh(intersectionGLTF.scene), [intersectionGLTF])
   const crossroadMesh = useMemo(() => getMesh(crossroadGLTF.scene), [crossroadGLTF])
   const lightMesh = useMemo(() => getMesh(lightGLTF.scene), [lightGLTF])
+
+  // Calibrate PBR material response for road surfaces and metallic streetlight poles
+  useEffect(() => {
+    ;[straightMesh, bendMesh, intersectionMesh, crossroadMesh].forEach((mesh) => {
+      if (mesh && mesh.material) {
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+        mats.forEach((m) => {
+          if (m instanceof THREE.MeshStandardMaterial) {
+            m.roughness = 0.72
+            m.metalness = 0.1
+          }
+        })
+      }
+    })
+    if (lightMesh && lightMesh.material) {
+      const mats = Array.isArray(lightMesh.material) ? lightMesh.material : [lightMesh.material]
+      mats.forEach((m) => {
+        if (m instanceof THREE.MeshStandardMaterial) {
+          m.roughness = 0.35
+          m.metalness = 0.75
+        }
+      })
+    }
+  }, [straightMesh, bendMesh, intersectionMesh, crossroadMesh, lightMesh])
 
   // Road network encircling the 2x2 Datacenter campus cluster and residential quarter
   const roadTiles = useMemo<TileDef[]>(() => {

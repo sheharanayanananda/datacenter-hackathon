@@ -32,6 +32,21 @@ const KenneyVehicle: React.FC<{ modelType: VehicleModelType; scale?: number }> =
       if ((node as THREE.Mesh).isMesh) {
         node.castShadow = true
         node.receiveShadow = true
+        const mesh = node as THREE.Mesh
+        if (Array.isArray(mesh.material)) {
+          mesh.material = mesh.material.map((m) => m.clone())
+        } else if (mesh.material) {
+          mesh.material = mesh.material.clone()
+        }
+
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+        mats.forEach((m) => {
+          if (m instanceof THREE.MeshStandardMaterial) {
+            // Automotive paint clearcoat with high gloss specular response
+            m.roughness = 0.22
+            m.metalness = 0.65
+          }
+        })
       }
     })
     return c

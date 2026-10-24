@@ -190,8 +190,13 @@ export const Scene: React.FC<SceneProps> = ({
       onContextMenu={(e) => e.preventDefault()}
     >
       <Canvas
-        shadows
+        shadows="soft"
         orthographic
+        gl={{
+          antialias: true,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.15,
+        }}
         camera={{
           position: [-16.2, 22.8, 37.2],
           zoom: 38.0,
@@ -199,25 +204,25 @@ export const Scene: React.FC<SceneProps> = ({
           far: 2000,
         }}
       >
-        {/* Soft morning/afternoon sky fog */}
-        <color attach="background" args={['#7ca7b5']} />
-        <fog attach="fog" args={['#7ca7b5', 180, 500]} />
+        {/* Soft atmospheric Nordic sky and distance fog */}
+        <color attach="background" args={['#85b3c2']} />
+        <fog attach="fog" args={['#85b3c2', 170, 480]} />
 
-        {/* Lighting setup matching warm Scandinavian sunlight */}
-        <ambientLight intensity={0.65} color="#e0f2fe" />
+        {/* Balanced lighting rig: low ambient to ensure rich depth & contrast */}
+        <ambientLight intensity={0.4} color="#f1f5f9" />
         <hemisphereLight
-          args={['#bae6fd', '#3f6212', 0.55]}
+          args={['#bae6fd', '#1e3a1e', 0.55]}
           position={[0, 50, 0]}
         />
 
-        {/* Dynamic directional sunlight with shadow frustum tracking camera target */}
+        {/* Dynamic directional sunlight with tuned bias to eliminate acne and peter-panning */}
         <primitive object={lightTargetRef.current} />
         <directionalLight
           ref={dirLightRef}
           target={lightTargetRef.current}
           position={[-11.5, 26, 9.5]}
-          intensity={1.9}
-          color="#fef3c7"
+          intensity={2.3}
+          color="#fffbeb"
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
@@ -227,14 +232,22 @@ export const Scene: React.FC<SceneProps> = ({
           shadow-camera-bottom={-34}
           shadow-camera-near={0.5}
           shadow-camera-far={85}
-          shadow-bias={-0.0003}
+          shadow-bias={-0.0001}
+          shadow-normalBias={0.035}
         />
 
-        {/* Secondary fill light from the lake side */}
+        {/* Secondary fill light reflecting off Lake Näsijärvi */}
         <directionalLight
-          position={[12, 10, -10]}
-          intensity={0.4}
+          position={[14, 9, -12]}
+          intensity={0.45}
           color="#93c5fd"
+        />
+
+        {/* Subtle rim light for crisp object silhouettes */}
+        <directionalLight
+          position={[-16, 12, -18]}
+          intensity={0.25}
+          color="#fef08a"
         />
 
         <Suspense fallback={null}>

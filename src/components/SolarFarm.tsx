@@ -8,13 +8,34 @@ useGLTF.preload('/assets/models/industrial/solar-panel-landscape-group.glb')
 export const SolarFarm: React.FC<{ level?: number; onSelectSolar?: () => void }> = ({ level = 3, onSelectSolar }) => {
   const landscapeGroupGLTF = useGLTF('/assets/models/industrial/solar-panel-landscape-group.glb')
 
-  // Clone template scene graph with shadows enabled
+  // Clone template scene graph with shadows and PBR photovoltaic shading
   const landscapeScene = useMemo(() => {
     const clone = landscapeGroupGLTF.scene.clone(true)
     clone.traverse((node) => {
       if ((node as THREE.Mesh).isMesh) {
         node.castShadow = true
         node.receiveShadow = true
+        const mesh = node as THREE.Mesh
+        if (Array.isArray(mesh.material)) {
+          mesh.material = mesh.material.map((m) => m.clone())
+        } else if (mesh.material) {
+          mesh.material = mesh.material.clone()
+        }
+
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+        mats.forEach((m) => {
+          if (m instanceof THREE.MeshStandardMaterial) {
+            if (m.name.includes('specular')) {
+              // Photovoltaic solar glass cells: sleek specular reflection & deep navy glint
+              m.roughness = 0.12
+              m.metalness = 0.65
+            } else {
+              // Galvanized steel and aluminum mounting frames
+              m.roughness = 0.42
+              m.metalness = 0.75
+            }
+          }
+        })
       }
     })
     return clone

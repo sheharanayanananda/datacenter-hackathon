@@ -15,6 +15,27 @@ const IndustrialHouseModel: React.FC<{
       if ((child as THREE.Mesh).isMesh) {
         child.castShadow = true
         child.receiveShadow = true
+        const mesh = child as THREE.Mesh
+        if (Array.isArray(mesh.material)) {
+          mesh.material = mesh.material.map((m) => m.clone())
+        } else if (mesh.material) {
+          mesh.material = mesh.material.clone()
+        }
+
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+        mats.forEach((m) => {
+          if (m instanceof THREE.MeshStandardMaterial) {
+            if (m.name.includes('specular')) {
+              // Workshop glass windows and metal trims
+              m.roughness = 0.18
+              m.metalness = 0.6
+            } else {
+              // Nordic timber siding and roof tiles
+              m.roughness = 0.68
+              m.metalness = 0.15
+            }
+          }
+        })
       }
     })
     return clone

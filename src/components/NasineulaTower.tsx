@@ -39,7 +39,7 @@ export const NasineulaTower: React.FC<NasineulaTowerProps> = ({
       {/* 2. Main Concrete Tower Shaft (Tapered, 168m scale representation) */}
       <mesh position={[0, 4.6, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[0.32, 0.68, 7.6, 24]} />
-        <meshStandardMaterial color="#e2e8f0" roughness={0.5} />
+        <meshStandardMaterial color="#e2e8f0" roughness={0.55} />
       </mesh>
 
       {/* 3. Observation Deck Saucer & Revolving Restaurant */}
@@ -47,7 +47,7 @@ export const NasineulaTower: React.FC<NasineulaTowerProps> = ({
         {/* Lower saucer support cone */}
         <mesh position={[0, -0.3, 0]} castShadow receiveShadow>
           <cylinderGeometry args={[1.25, 0.4, 0.6, 24]} />
-          <meshStandardMaterial color="#cbd5e1" roughness={0.4} />
+          <meshStandardMaterial color="#cbd5e1" roughness={0.35} />
         </mesh>
 
         {/* Lower observation ring */}
@@ -56,27 +56,28 @@ export const NasineulaTower: React.FC<NasineulaTowerProps> = ({
           <meshStandardMaterial color="#1e293b" roughness={0.3} />
         </mesh>
 
-        {/* Panoramic glass window band with warm glow */}
+        {/* Panoramic glass window band with warm glow and specular glint */}
         <mesh position={[0, 0.35, 0]}>
           <cylinderGeometry args={[1.28, 1.28, 0.22, 24]} />
           <meshStandardMaterial
             color="#38bdf8"
             emissive="#0284c7"
-            emissiveIntensity={0.9}
-            roughness={0.1}
+            emissiveIntensity={0.65}
+            roughness={0.08}
+            metalness={0.25}
           />
         </mesh>
 
         {/* Revolving restaurant upper tier */}
         <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
           <cylinderGeometry args={[1.15, 1.26, 0.3, 24]} />
-          <meshStandardMaterial color="#f1f5f9" roughness={0.4} />
+          <meshStandardMaterial color="#f1f5f9" roughness={0.35} />
         </mesh>
 
         {/* Observation deck roof / canopy */}
         <mesh position={[0, 0.85, 0]} castShadow>
           <cylinderGeometry args={[0.65, 1.15, 0.2, 24]} />
-          <meshStandardMaterial color="#475569" roughness={0.5} />
+          <meshStandardMaterial color="#475569" roughness={0.45} />
         </mesh>
       </group>
 
@@ -85,7 +86,7 @@ export const NasineulaTower: React.FC<NasineulaTowerProps> = ({
         {/* Mast base cylinder */}
         <mesh position={[0, 0.4, 0]} castShadow>
           <cylinderGeometry args={[0.08, 0.18, 0.8, 12]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.7} />
+          <meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.25} />
         </mesh>
 
         {/* Red & white aviation painted sections */}

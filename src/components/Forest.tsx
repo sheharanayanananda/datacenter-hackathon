@@ -98,6 +98,39 @@ export const Forest: React.FC = () => {
   const meshRockSmall = useMemo(() => getMesh(gltfRockSmall.scene), [gltfRockSmall])
   const meshRockWide = useMemo(() => getMesh(gltfRockWide.scene), [gltfRockWide])
 
+  // Calibrate PBR material roughness and environment bounce for organic forest foliage & rocks
+  useEffect(() => {
+    ;[
+      meshTree,
+      meshTreeCrooked,
+      meshTreeHigh,
+      meshTreeHighCrooked,
+      meshTreeHighRound,
+      meshRockLarge,
+      meshRockSmall,
+      meshRockWide,
+    ].forEach((mesh) => {
+      if (mesh && mesh.material) {
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+        mats.forEach((m) => {
+          if (m instanceof THREE.MeshStandardMaterial) {
+            m.roughness = 0.82
+            m.metalness = 0.02
+          }
+        })
+      }
+    })
+  }, [
+    meshTree,
+    meshTreeCrooked,
+    meshTreeHigh,
+    meshTreeHighCrooked,
+    meshTreeHighRound,
+    meshRockLarge,
+    meshRockSmall,
+    meshRockWide,
+  ])
+
   // Generate deep, uniform, high-detail Clash of Clans style border layout
   const {
     treeInstances,

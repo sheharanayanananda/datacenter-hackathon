@@ -27,6 +27,27 @@ export const DataCenter: React.FC<DataCenterProps> = ({
       if ((node as THREE.Mesh).isMesh) {
         node.castShadow = true
         node.receiveShadow = true
+        const mesh = node as THREE.Mesh
+        if (Array.isArray(mesh.material)) {
+          mesh.material = mesh.material.map((m) => m.clone())
+        } else if (mesh.material) {
+          mesh.material = mesh.material.clone()
+        }
+
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+        mats.forEach((m) => {
+          if (m instanceof THREE.MeshStandardMaterial) {
+            if (m.name.includes('specular')) {
+              // Windows, metallic vents, and architectural louvers
+              m.roughness = 0.22
+              m.metalness = 0.78
+            } else {
+              // High-tech exterior insulated facade panels
+              m.roughness = 0.62
+              m.metalness = 0.28
+            }
+          }
+        })
       }
     })
     return clone
@@ -49,12 +70,33 @@ export const DataCenter: React.FC<DataCenterProps> = ({
         onClick?.()
       }}
     >
-      {/* Concrete foundation plinth pad */}
+      {/* Heavy industrial concrete foundation plinth */}
       <mesh position={[0, 0.04, 0]} receiveShadow castShadow>
         <boxGeometry args={[4.8, 0.08, 4.2]} />
         <meshStandardMaterial
-          color={isSelected ? '#64748b' : '#334155'}
-          roughness={0.8}
+          color={isSelected ? '#475569' : '#1e293b'}
+          roughness={0.75}
+          metalness={0.1}
+        />
+      </mesh>
+
+      {/* Modern Data Center Server Status LED Accents */}
+      <mesh position={[-1.6, 0.12, 2.05]}>
+        <boxGeometry args={[0.6, 0.04, 0.02]} />
+        <meshStandardMaterial
+          color="#10b981"
+          emissive="#10b981"
+          emissiveIntensity={1.8}
+          roughness={0.2}
+        />
+      </mesh>
+      <mesh position={[-0.8, 0.12, 2.05]}>
+        <boxGeometry args={[0.4, 0.04, 0.02]} />
+        <meshStandardMaterial
+          color="#06b6d4"
+          emissive="#06b6d4"
+          emissiveIntensity={1.5}
+          roughness={0.2}
         />
       </mesh>
 

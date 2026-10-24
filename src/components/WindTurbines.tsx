@@ -65,7 +65,7 @@ export const WindTurbines: React.FC<{ level?: number; onSelectWind?: () => void 
   const towerMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
       color: '#f8fafc',
-      roughness: 0.35,
+      roughness: 0.32,
       metalness: 0.08,
       side: THREE.DoubleSide,
     })
@@ -90,7 +90,7 @@ export const WindTurbines: React.FC<{ level?: number; onSelectWind?: () => void 
     // Rotor material (retains the blade texture with red tip stripes)
     const rMat = (Array.isArray(origMat) ? origMat[0] : origMat).clone() as THREE.MeshStandardMaterial
     rMat.side = THREE.DoubleSide
-    rMat.roughness = 0.35
+    rMat.roughness = 0.32
     rMat.metalness = 0.05
     rMat.color.set('#ffffff')
 

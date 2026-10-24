@@ -32,6 +32,16 @@ export const ExpansionZoneForest: React.FC<{ level: number }> = ({ level }) => {
         if ((node as THREE.Mesh).isMesh) {
           node.castShadow = true
           node.receiveShadow = true
+          const mesh = node as THREE.Mesh
+          if (mesh.material) {
+            const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+            mats.forEach((m) => {
+              if (m instanceof THREE.MeshStandardMaterial) {
+                m.roughness = 0.82
+                m.metalness = 0.02
+              }
+            })
+          }
         }
       })
       return cloned
