@@ -57,8 +57,10 @@ interface VehicleRuntime {
   state: VehicleState;
   // Progress along current curve (0.0 to 1.0)
   progress: number;
-  // Speed multiplier
+  // Base cruising speed
   speed: number;
+  // Individual preferred following distance
+  minGap: number;
   // Laps completed on main loop
   lapsCompleted: number;
   // Target laps before parking
@@ -67,6 +69,8 @@ interface VehicleRuntime {
   assignedStallIndex: number | null;
   // Time remaining parked (seconds)
   parkedTimer: number;
+  // Time spent yielding at driveway stop line
+  yieldTimer: number;
   // Specific path when entering/exiting
   customCurve: THREE.CatmullRomCurve3 | null;
 }
@@ -101,7 +105,7 @@ export const Traffic: React.FC = () => {
       new THREE.Vector3(19.85, 0.08, 4.35),
       new THREE.Vector3(19.5, 0.08, 4.5),
 
-      // South Main Avenue (along z = 4.5, heading West past houses)
+      // South Main Avenue (along z = 4.5, heading West past houses through crossroad)
       new THREE.Vector3(16.5, 0.08, 4.5),
       new THREE.Vector3(13.0, 0.08, 4.5),
       new THREE.Vector3(9.5, 0.08, 4.5),
@@ -109,13 +113,41 @@ export const Traffic: React.FC = () => {
       new THREE.Vector3(2.5, 0.08, 4.5),
       new THREE.Vector3(-1.0, 0.08, 4.5),
       new THREE.Vector3(-4.0, 0.08, 4.5),
-      new THREE.Vector3(-6.5, 0.08, 4.5),
+      new THREE.Vector3(-7.0, 0.08, 4.5), // Across 4-way crossroad
+      new THREE.Vector3(-9.5, 0.08, 4.5),
+      new THREE.Vector3(-12.0, 0.08, 4.5),
+      new THREE.Vector3(-14.0, 0.08, 4.5),
+      new THREE.Vector3(-14.5, 0.08, 4.5),
 
-      // Corner 3 fillet: (-7.0, 4.5) turning North between house blocks
-      new THREE.Vector3(-6.85, 0.08, 4.35),
-      new THREE.Vector3(-7.0, 0.08, 4.0),
+      // Corner A fillet: (-15.0, 4.5) turning South into Outer West Avenue
+      new THREE.Vector3(-14.85, 0.08, 4.65),
+      new THREE.Vector3(-15.0, 0.08, 5.0),
 
-      // Residential Street (along x = -7.0, heading North)
+      // Outer West Avenue (along x = -15.0, heading South)
+      new THREE.Vector3(-15.0, 0.08, 6.5),
+      new THREE.Vector3(-15.0, 0.08, 8.5),
+      new THREE.Vector3(-15.0, 0.08, 10.5),
+      new THREE.Vector3(-15.0, 0.08, 11.0),
+
+      // Corner B fillet: (-15.0, 11.5) turning East into South Connector Avenue
+      new THREE.Vector3(-14.85, 0.08, 11.35),
+      new THREE.Vector3(-14.5, 0.08, 11.5),
+
+      // South Connector Avenue (along z = 11.5, heading East)
+      new THREE.Vector3(-13.0, 0.08, 11.5),
+      new THREE.Vector3(-11.0, 0.08, 11.5),
+      new THREE.Vector3(-9.0, 0.08, 11.5),
+      new THREE.Vector3(-7.5, 0.08, 11.5),
+
+      // Corner C fillet: (-7.0, 11.5) turning North into Residential Street
+      new THREE.Vector3(-7.15, 0.08, 11.35),
+      new THREE.Vector3(-7.0, 0.08, 11.0),
+
+      // Residential Street (along x = -7.0, heading North through crossroad)
+      new THREE.Vector3(-7.0, 0.08, 9.5),
+      new THREE.Vector3(-7.0, 0.08, 7.5),
+      new THREE.Vector3(-7.0, 0.08, 5.5),
+      new THREE.Vector3(-7.0, 0.08, 4.5), // Across 4-way crossroad
       new THREE.Vector3(-7.0, 0.08, 2.5),
       new THREE.Vector3(-7.0, 0.08, 1.0),
 
@@ -154,8 +186,8 @@ export const Traffic: React.FC = () => {
     const target = new THREE.Vector3(20.0, 0.08, -8.5)
     let bestT = 0
     let bestDist = Infinity
-    for (let i = 0; i < 200; i++) {
-      const t = i / 200
+    for (let i = 0; i < 400; i++) {
+      const t = i / 400
       const p = loopCurve.getPointAt(t)
       const d = p.distanceTo(target)
       if (d < bestDist) {
@@ -179,97 +211,110 @@ export const Traffic: React.FC = () => {
     return new THREE.CatmullRomCurve3(pts, false, 'centripetal')
   }
 
-  // Helper to build exit curve out of a given stall
+  // Helper to build exit curve out of a given stall with stop line at x=21.2
   const buildExitCurve = (stall: ParkingStall) => {
     const pts = [
       new THREE.Vector3(stall.worldPos[0], 0.08, stall.worldPos[2]),
       new THREE.Vector3(stall.aislePos[0], 0.08, stall.aislePos[2]),
       new THREE.Vector3(22.8, 0.08, -8.5),
       new THREE.Vector3(21.8, 0.08, -8.5),
-      new THREE.Vector3(20.8, 0.08, -8.5),
-      new THREE.Vector3(20.0, 0.08, -8.5),
+      new THREE.Vector3(21.2, 0.08, -8.5), // Driveway holding/stop line clear of road
+      new THREE.Vector3(20.0, 0.08, -8.5), // Road center junction
     ]
     return new THREE.CatmullRomCurve3(pts, false, 'centripetal')
   }
 
   // 2. Initial fleet of vehicles loaded from kenney_car-kit
+  // 2. Initial fleet with staggered positions, varied driving styles and randomized timers
   const vehiclesRef = useRef<VehicleRuntime[]>([
-    // Active sports sedan cruising on loop
+    // Active sports sedan cruising on loop (nimble & swift)
     {
       id: 'car-sports',
       modelType: 'sedan-sports',
       state: 'LOOPING',
-      progress: 0.05,
-      speed: 0.022,
-      lapsCompleted: 0,
-      targetLaps: 2,
-      assignedStallIndex: null,
-      parkedTimer: 0,
-      customCurve: null,
-    },
-    // Active commercial delivery truck on loop
-    {
-      id: 'car-delivery',
-      modelType: 'delivery',
-      state: 'LOOPING',
-      progress: 0.38,
-      speed: 0.018,
+      progress: 0.08,
+      speed: 0.020,
+      minGap: 0.020,
       lapsCompleted: 0,
       targetLaps: 3,
       assignedStallIndex: null,
       parkedTimer: 0,
+      yieldTimer: 0,
       customCurve: null,
     },
-    // Active municipal police cruiser on loop
+    // Active commercial delivery truck on loop (calm & steady)
+    {
+      id: 'car-delivery',
+      modelType: 'delivery',
+      state: 'LOOPING',
+      progress: 0.42,
+      speed: 0.014,
+      minGap: 0.032,
+      lapsCompleted: 0,
+      targetLaps: 2,
+      assignedStallIndex: null,
+      parkedTimer: 0,
+      yieldTimer: 0,
+      customCurve: null,
+    },
+    // Active municipal police cruiser on loop (attentive patrol)
     {
       id: 'car-police',
       modelType: 'police',
       state: 'LOOPING',
       progress: 0.72,
-      speed: 0.023,
+      speed: 0.018,
+      minGap: 0.024,
       lapsCompleted: 0,
-      targetLaps: 2,
+      targetLaps: 4,
       assignedStallIndex: null,
       parkedTimer: 0,
+      yieldTimer: 0,
       customCurve: null,
     },
-    // Parked in West Stall 1 (Yellow Taxi)
+    // Parked in West Stall 1 (Yellow Taxi - departs first)
     {
       id: 'car-taxi',
       modelType: 'taxi',
       state: 'PARKED',
       progress: 1.0,
-      speed: 0.021,
+      speed: 0.017,
+      minGap: 0.024,
       lapsCompleted: 0,
       targetLaps: 2,
       assignedStallIndex: 0,
-      parkedTimer: 6.0, // exits soon to join traffic
+      parkedTimer: 7.0,
+      yieldTimer: 0,
       customCurve: null,
     },
-    // Parked in East Stall 1 (SUV)
+    // Parked in East Stall 1 (SUV - departs mid-way)
     {
       id: 'car-suv',
       modelType: 'suv',
       state: 'PARKED',
       progress: 1.0,
-      speed: 0.019,
+      speed: 0.015,
+      minGap: 0.028,
       lapsCompleted: 0,
-      targetLaps: 2,
+      targetLaps: 3,
       assignedStallIndex: 4,
-      parkedTimer: 18.0,
+      parkedTimer: 25.0,
+      yieldTimer: 0,
       customCurve: null,
     },
-    // Parked in West Stall 2 (Sports Hatchback)
+    // Parked in West Stall 2 (Sports Hatchback - departs later)
     {
       id: 'car-hatchback',
       modelType: 'hatchback-sports',
       state: 'PARKED',
       progress: 1.0,
-      speed: 0.021,
+      speed: 0.019,
+      minGap: 0.022,
       lapsCompleted: 0,
-      targetLaps: 3,
+      targetLaps: 2,
       assignedStallIndex: 1,
-      parkedTimer: 30.0,
+      parkedTimer: 45.0,
+      yieldTimer: 0,
       customCurve: null,
     },
   ])
@@ -291,53 +336,48 @@ export const Traffic: React.FC = () => {
 
       // --- STATE 1: LOOPING ---
       if (veh.state === 'LOOPING') {
-        // 1. Adaptive Cruise Control: check for vehicle ahead on the loop
+        // 1. Adaptive Cruise Control on the loop with individual gap preferences
         let speedFactor = 1.0
 
         for (let j = 0; j < vehiclesRef.current.length; j++) {
           if (j === index) continue
           const other = vehiclesRef.current[j]
+          // Only follow active vehicles on the loop (parked and driveway cars do not impede the main thoroughfare)
           if (other.state === 'LOOPING') {
             let diff = (other.progress - veh.progress) % 1.0
             if (diff < 0) diff += 1.0
 
-            // If another vehicle is ahead within ~5.5 units (progress ~0.045)
-            if (diff < 0.045 && diff > 0.0001) {
-              if (diff < 0.02) {
+            const safetyBuffer = veh.minGap + 0.025
+            if (diff < safetyBuffer && diff > 0.0001) {
+              if (diff < veh.minGap) {
                 speedFactor = 0.0 // Full stop behind car ahead
               } else {
-                // Smooth deceleration buffer
-                speedFactor = Math.min(speedFactor, (diff - 0.02) / 0.025)
+                // Smooth deceleration buffer matching leader
+                speedFactor = Math.min(speedFactor, (diff - veh.minGap) / 0.025)
               }
             }
           }
         }
 
-        // 2. 3D Spatial Forward Proximity Check (Safety Net)
-        const myPos = group.position
-        for (let j = 0; j < vehiclesRef.current.length; j++) {
-          if (j === index) continue
-          const otherGroup = carGroupRefs.current[j]
-          if (!otherGroup) continue
-          const otherVeh = vehiclesRef.current[j]
-          if (otherVeh.state === 'PARKED') continue
-
-          const dist = myPos.distanceTo(otherGroup.position)
-          if (dist < 2.2) {
-            const toOther = new THREE.Vector3().subVectors(otherGroup.position, myPos).normalize()
-            const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(group.quaternion)
-            if (forward.dot(toOther) > 0.4) {
-              if (dist < 1.35) {
-                speedFactor = 0.0
-              } else {
-                speedFactor = Math.min(speedFactor, (dist - 1.35) / 0.85)
-              }
-            }
-          }
+        // 2. Realistic road dynamics: open straightaway acceleration vs residential deceleration
+        let roadModifier = 1.0
+        if (veh.progress <= 0.13 || (veh.progress > 0.28 && veh.progress < 0.48)) {
+          // North Road & South Main Avenue: brisk open-road cruising
+          roadModifier = 1.15
+        } else if (veh.progress >= 0.50 && veh.progress <= 0.72) {
+          // Outer West Avenue & South Connector Avenue: steady cruising
+          roadModifier = 1.08
+        } else if (veh.progress > 0.72 && veh.progress < 0.88) {
+          // Residential streets and inner quarter: cozy neighborhood pace
+          roadModifier = 0.85
         }
+
+        // Micro speed variation per car for organic, un-robotic flow
+        const organicNoise = 1.0 + Math.sin(index * 2.3 + veh.progress * 12.0) * 0.04
+        const currentSpeed = veh.speed * roadModifier * organicNoise
 
         const prevProg = veh.progress
-        veh.progress = (veh.progress + dt * veh.speed * speedFactor) % 1.0
+        veh.progress = (veh.progress + dt * currentSpeed * speedFactor) % 1.0
 
         // Lap completed when wrapping from ~0.99 to ~0.0
         if (prevProg > 0.8 && veh.progress < 0.2) {
@@ -387,8 +427,8 @@ export const Traffic: React.FC = () => {
         if (veh.progress >= 1.0) {
           veh.progress = 1.0
           veh.state = 'PARKED'
-          // Dwell in parking stall for 12 to 24 seconds
-          veh.parkedTimer = 12.0 + Math.random() * 12.0
+          // Dwell in parking stall for 16 to 45 seconds (varied realistic visits)
+          veh.parkedTimer = 16.0 + Math.random() * 29.0
           veh.customCurve = null
 
           // Set parked transform exactly
@@ -432,8 +472,8 @@ export const Traffic: React.FC = () => {
 
       // --- STATE 4: EXITING CARPARK ---
       else if (veh.state === 'EXITING_CARPARK' && veh.customCurve) {
-        // Approaching road junction (progress >= 0.75): yield to oncoming traffic on main loop
-        const approachingJunction = veh.progress >= 0.75
+        // Approaching road junction (progress >= 0.70): yield to oncoming traffic on main loop
+        const approachingJunction = veh.progress >= 0.70
         let yieldToLoopTraffic = false
 
         if (approachingJunction) {
@@ -441,15 +481,17 @@ export const Traffic: React.FC = () => {
             if (other.state !== 'LOOPING') return false
             let distToJunction = (junctionProgress - other.progress) % 1.0
             if (distToJunction < 0) distToJunction += 1.0
-            // Oncoming vehicle within ~7 units before junction or 2 units past
-            return distToJunction < 0.055 || Math.abs(other.progress - junctionProgress) < 0.015
+            // Oncoming vehicle within ~4.5 units before junction or immediately crossing
+            return distToJunction < 0.045 || distToJunction > 0.995
           })
         }
 
-        if (yieldToLoopTraffic && veh.progress >= 0.78) {
-          // Hold at the driveway stop line until road is clear
-          veh.progress = 0.78
+        // Hold at the driveway curb stop line until road is clear (or max 6s timeout to avoid any stalemate)
+        if (yieldToLoopTraffic && veh.progress >= 0.72 && veh.yieldTimer < 6.0) {
+          veh.yieldTimer += dt
+          veh.progress = 0.72
         } else {
+          veh.yieldTimer = 0
           veh.progress += dt * (veh.speed * 3.0)
         }
 
@@ -460,9 +502,9 @@ export const Traffic: React.FC = () => {
             veh.assignedStallIndex = null
           }
           veh.state = 'LOOPING'
-          veh.progress = (junctionProgress + 0.01) % 1.0
+          veh.progress = (junctionProgress + 0.015) % 1.0
           veh.lapsCompleted = 0
-          veh.targetLaps = 2 + Math.floor(Math.random() * 2)
+          veh.targetLaps = 1 + Math.floor(Math.random() * 4)
           veh.customCurve = null
         } else {
           const pos = veh.customCurve.getPointAt(Math.min(veh.progress, 1.0))
