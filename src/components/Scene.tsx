@@ -24,6 +24,16 @@ interface SceneProps {
   recenterTrigger?: number;
 }
 
+// Bounding box limits for camera target to keep focus strictly within the designed world
+const PAN_LIMITS = {
+  minX: -7.0,
+  maxX: 15.0,
+  minZ: -12.5,
+  maxZ: 8.5,
+  y: 0.5,
+}
+
+// Controls camera movement and clamps navigation strictly inside the designed area
 const MapController: React.FC<{
   controlsRef: React.RefObject<any>;
   recenterTrigger: number;
@@ -37,7 +47,7 @@ const MapController: React.FC<{
       controlsRef.current.target.set(4.5, 0.5, -2.5)
       camera.position.set(-16.2, 22.8, 37.2)
       if ('zoom' in camera) {
-        ;(camera as THREE.OrthographicCamera).zoom = 28.0
+        ;(camera as THREE.OrthographicCamera).zoom = 38.0
         camera.updateProjectionMatrix()
       }
       controlsRef.current.update()
@@ -61,7 +71,7 @@ const MapController: React.FC<{
     }
   }, [])
 
-  // Smooth keyboard panning across ground
+  // Smooth keyboard panning across ground and hard boundary clamping
   useFrame((_, delta) => {
     const controls = controlsRef.current
     if (!controls) return
@@ -93,10 +103,43 @@ const MapController: React.FC<{
     if (move.lengthSq() > 0) {
       controls.target.add(move)
       camera.position.add(move)
-      controls.update()
     }
+
+    // Hard boundary clamping: stops both mouse drag panning and keyboard panning
+    const prevX = controls.target.x
+    const prevZ = controls.target.z
+
+    controls.target.x = THREE.MathUtils.clamp(controls.target.x, PAN_LIMITS.minX, PAN_LIMITS.maxX)
+    controls.target.z = THREE.MathUtils.clamp(controls.target.z, PAN_LIMITS.minZ, PAN_LIMITS.maxZ)
+    controls.target.y = PAN_LIMITS.y
+
+    const deltaX = controls.target.x - prevX
+    const deltaZ = controls.target.z - prevZ
+    if (deltaX !== 0 || deltaZ !== 0) {
+      camera.position.x += deltaX
+      camera.position.z += deltaZ
+    }
+
+    controls.update()
   })
 
+  return null
+}
+
+// Directional sunlight tracker: follows camera target so that all visible trees receive 100% full shadow coverage
+const SunController: React.FC<{
+  dirLightRef: React.RefObject<THREE.DirectionalLight | null>;
+  lightTargetRef: React.RefObject<THREE.Object3D>;
+  controlsRef: React.RefObject<any>;
+}> = ({ dirLightRef, lightTargetRef, controlsRef }) => {
+  useFrame(() => {
+    if (dirLightRef.current && lightTargetRef.current && controlsRef.current) {
+      const target = controlsRef.current.target
+      dirLightRef.current.position.set(target.x - 16, 26, target.z + 12)
+      lightTargetRef.current.position.set(target.x, 0, target.z)
+      lightTargetRef.current.updateMatrixWorld()
+    }
+  })
   return null
 }
 
@@ -109,6 +152,8 @@ export const Scene: React.FC<SceneProps> = ({
   recenterTrigger = 0,
 }) => {
   const controlsRef = useRef<any>(null)
+  const dirLightRef = useRef<THREE.DirectionalLight>(null)
+  const lightTargetRef = useRef<THREE.Object3D>(new THREE.Object3D())
   const [spacePressed, setSpacePressed] = useState(false)
 
   // Hold Spacebar for temporary Pan mode
@@ -145,7 +190,7 @@ export const Scene: React.FC<SceneProps> = ({
         orthographic
         camera={{
           position: [-16.2, 22.8, 37.2],
-          zoom: 28.0,
+          zoom: 38.0,
           near: -500,
           far: 2000,
         }}
@@ -154,25 +199,30 @@ export const Scene: React.FC<SceneProps> = ({
         <color attach="background" args={['#7ca7b5']} />
         <fog attach="fog" args={['#7ca7b5', 180, 500]} />
 
-        {/* Lighting setup matching the reference image's warm Scandinavian sunlight */}
+        {/* Lighting setup matching warm Scandinavian sunlight */}
         <ambientLight intensity={0.65} color="#e0f2fe" />
         <hemisphereLight
           args={['#bae6fd', '#3f6212', 0.55]}
           position={[0, 50, 0]}
         />
+
+        {/* Dynamic directional sunlight with shadow frustum tracking camera target */}
+        <primitive object={lightTargetRef.current} />
         <directionalLight
-          position={[-16, 26, 12]}
+          ref={dirLightRef}
+          target={lightTargetRef.current}
+          position={[-11.5, 26, 9.5]}
           intensity={1.9}
           color="#fef3c7"
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
-          shadow-camera-left={-28}
-          shadow-camera-right={28}
-          shadow-camera-top={28}
-          shadow-camera-bottom={-28}
+          shadow-camera-left={-34}
+          shadow-camera-right={34}
+          shadow-camera-top={34}
+          shadow-camera-bottom={-34}
           shadow-camera-near={0.5}
-          shadow-camera-far={80}
+          shadow-camera-far={85}
           shadow-bias={-0.0003}
         />
 
@@ -200,7 +250,7 @@ export const Scene: React.FC<SceneProps> = ({
           <WindTurbines />
 
           {/* 5. Central 2x2 Data Center Campus Cluster */}
-          {/* South-West Facility (Original Primary Facility) */}
+          {/* South-West Facility */}
           <DataCenter
             position={[10.0, 0, -5.5]}
             isSelected={dataCenterHovered}
@@ -232,7 +282,7 @@ export const Scene: React.FC<SceneProps> = ({
             onClick={() => onOpenDetails('overview')}
           />
 
-          {/* 5b. Dedicated Solar Microgrid Farm (West side of road, aligned with 2x2 Datacenter grid) */}
+          {/* 5b. Dedicated Solar Microgrid Farm */}
           <SolarFarm />
 
           {/* 6. Carpark (Attached East of Datacenter) */}
@@ -255,7 +305,13 @@ export const Scene: React.FC<SceneProps> = ({
           recenterTrigger={recenterTrigger}
         />
 
-        {/* Camera Orbit Constraints: Framed default overview with max zoomout boundary */}
+        <SunController
+          dirLightRef={dirLightRef}
+          lightTargetRef={lightTargetRef}
+          controlsRef={controlsRef}
+        />
+
+        {/* Camera Orbit Constraints: Locked inside designed territory, no seeing the void */}
         <OrbitControls
           ref={controlsRef}
           enableRotate={true}
@@ -264,10 +320,10 @@ export const Scene: React.FC<SceneProps> = ({
           screenSpacePanning={false}
           panSpeed={1.2}
           rotateSpeed={0.8}
-          minZoom={28.0} // Tight max zoomout limit bringing the town up close and full-frame
-          maxZoom={90}   // Generous zoomin capability to inspect town details
+          minZoom={36.0} // Prevents zooming out beyond the forest perimeter
+          maxZoom={90}   // Generous zoom-in for inspecting town details
           maxPolarAngle={Math.PI / 2.7}  // ~67 deg: generous low angle
-          minPolarAngle={Math.PI / 8.0}  // ~22 deg: generous high aerial view
+          minPolarAngle={Math.PI / 8.0}  // ~22 deg: high aerial view
           target={[4.5, 0.5, -2.5]}
           dampingFactor={0.06}
           mouseButtons={{

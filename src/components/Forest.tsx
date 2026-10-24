@@ -98,7 +98,7 @@ export const Forest: React.FC = () => {
   const meshRockSmall = useMemo(() => getMesh(gltfRockSmall.scene), [gltfRockSmall])
   const meshRockWide = useMemo(() => getMesh(gltfRockWide.scene), [gltfRockWide])
 
-  // Generate deterministic Clash of Clans style border layout
+  // Generate deep, uniform, high-detail Clash of Clans style border layout
   const {
     treeInstances,
     treeCrookedInstances,
@@ -111,18 +111,11 @@ export const Forest: React.FC = () => {
   } = useMemo(() => {
     const rng = createRng(4242)
 
-    // Lake Näsijärvi boundary check (ellipse at [-13.5, -17.5])
+    // Lake Näsijärvi boundary check (ellipse at [-16.0, -19.5])
     const isInsideLake = (x: number, z: number, padding: number = 0) => {
-      const dx = (x - -13.5) / (12.2 + padding)
-      const dz = (z - -17.5) / (8.2 + padding)
+      const dx = (x - -16.0) / (15.8 + padding)
+      const dz = (z - -19.5) / (10.7 + padding)
       return dx * dx + dz * dz < 1.0
-    }
-
-    // Distance to lake center normalized
-    const lakeNormDist = (x: number, z: number) => {
-      const dx = (x - -13.5) / 12.2
-      const dz = (z - -17.5) / 8.2
-      return Math.sqrt(dx * dx + dz * dz)
     }
 
     // Exclusion zones for town facilities, roads, paths, and clearings
@@ -175,17 +168,17 @@ export const Forest: React.FC = () => {
     const rockMinDist = 1.1
 
     // =========================================================================
-    // 1. CLASH OF CLANS DENSE FOREST BORDER GENERATION
+    // 1. DEEP & EXPANSIVE CLASH OF CLANS FOREST BORDER
+    // Extended deep enough so users never see the map cutoffs
     // =========================================================================
-    // Map bounds for the dense framing perimeter
-    const minX = -42
-    const maxX = 44
-    const minZ = -42
-    const maxZ = 38
+    const minX = -50
+    const maxX = 52
+    const minZ = -48
+    const maxZ = 46
 
     // Candidate grid scanning with organic jitter
-    for (let z = minZ; z <= maxZ; z += 1.5) {
-      for (let x = minX; x <= maxX; x += 1.5) {
+    for (let z = minZ; z <= maxZ; z += 1.45) {
+      for (let x = minX; x <= maxX; x += 1.45) {
         // Determine if (x, z) lies in the border zone framing the city
         const isNorth = z <= -17.5
         const isSouth = z >= 13.0 || (z >= 6.0 && x < -16.5) || (z >= 20.0 && x >= 8.0)
@@ -208,15 +201,14 @@ export const Forest: React.FC = () => {
             }
 
             if (!tooClose) {
-              // Stepped canopy: Taller trees towards the outer boundaries
-              const distFromCenter = Math.hypot(jx - 2.0, jz - -2.0)
-              const baseScale = distFromCenter > 30 ? 1.15 + rng() * 0.25 : 0.9 + rng() * 0.25
+              // Uniform scale across all distances - keeping consistent detail everywhere
+              const scale = 0.95 + rng() * 0.28
 
               trees.push({
                 x: jx,
                 z: jz,
                 rotation: rng() * Math.PI * 2,
-                scale: baseScale,
+                scale,
               })
             }
           }
@@ -225,15 +217,13 @@ export const Forest: React.FC = () => {
     }
 
     // =========================================================================
-    // 2. SCENIC LAKE NÄSIJÄRVI SHORELINE ROCKS & TREES
+    // 2. SCENIC LAKE NÄSIJÄRVI SHORELINE ROCKS
     // =========================================================================
-    // Place decorative shoreline rocks and occasional pine/round trees around the lake perimeter
-    for (let angle = 0; angle < Math.PI * 2; angle += 0.16) {
+    for (let angle = 0; angle < Math.PI * 2; angle += 0.15) {
       const d = 1.05 + rng() * 0.18
-      const rx = -13.5 + Math.cos(angle) * 12.2 * d + (rng() - 0.5) * 0.7
-      const rz = -17.5 + Math.sin(angle) * 8.2 * d + (rng() - 0.5) * 0.7
+      const rx = -16.0 + Math.cos(angle) * 15.8 * d + (rng() - 0.5) * 0.7
+      const rz = -19.5 + Math.sin(angle) * 10.7 * d + (rng() - 0.5) * 0.7
 
-      // Only place if clear of roads and town
       if (!isInsideTown(rx, rz) && !isInsideLake(rx, rz, 0.2)) {
         let tooCloseRock = false
         for (let i = 0; i < rocks.length; i++) {
@@ -255,37 +245,34 @@ export const Forest: React.FC = () => {
 
     // =========================================================================
     // 3. FOREST EDGE SCATTERED BOULDER & ROCK OUTCROPPINGS
+    // Distributed along the treeline and throughout the woods
     // =========================================================================
-    // Scatter rocks along the inner perimeter where forest meets the town
-    for (let i = 0; i < trees.length; i += 7) {
+    for (let i = 0; i < trees.length; i += 6) {
       const t = trees[i]
-      const distFromCenter = Math.hypot(t.x - 2.0, t.z - -2.0)
-      // Only at the transitional inner tree line (closer to town)
-      if (distFromCenter < 28 && distFromCenter > 15) {
-        const rx = t.x + (rng() - 0.5) * 1.8
-        const rz = t.z + (rng() - 0.5) * 1.8
-        if (!isInsideTown(rx, rz)) {
-          let tooClose = false
-          for (let k = 0; k < rocks.length; k++) {
-            if (Math.hypot(rx - rocks[k].x, rz - rocks[k].z) < rockMinDist) {
-              tooClose = true
-              break
-            }
+      const rx = t.x + (rng() - 0.5) * 1.8
+      const rz = t.z + (rng() - 0.5) * 1.8
+      if (!isInsideTown(rx, rz)) {
+        let tooClose = false
+        for (let k = 0; k < rocks.length; k++) {
+          if (Math.hypot(rx - rocks[k].x, rz - rocks[k].z) < rockMinDist) {
+            tooClose = true
+            break
           }
-          if (!tooClose) {
-            rocks.push({
-              x: rx,
-              z: rz,
-              rotation: rng() * Math.PI * 2,
-              scale: 0.7 + rng() * 0.5,
-            })
-          }
+        }
+        if (!tooClose) {
+          rocks.push({
+            x: rx,
+            z: rz,
+            rotation: rng() * Math.PI * 2,
+            scale: 0.7 + rng() * 0.5,
+          })
         }
       }
     }
 
     // =========================================================================
-    // 4. PARTITION INTO SPECIFIC TREE & ROCK INSTANCED BATCHES
+    // 4. UNIFORM DISTRIBUTION INTO ALL 5 TREE VARIETIES
+    // Exact same rich distribution and detail across ALL distances
     // =========================================================================
     const tStandard: InstanceDef[] = []
     const tCrooked: InstanceDef[] = []
@@ -294,21 +281,17 @@ export const Forest: React.FC = () => {
     const tHighRound: InstanceDef[] = []
 
     trees.forEach((item) => {
-      const dist = Math.hypot(item.x - 2.0, item.z - -2.0)
       const dice = rng()
-
-      // Outer ring: mostly tall trees forming high backdrop
-      if (dist > 30) {
-        if (dice < 0.45) tHigh.push(item)
-        else if (dice < 0.8) tHighRound.push(item)
-        else tStandard.push(item)
+      if (dice < 0.22) {
+        tStandard.push(item)
+      } else if (dice < 0.42) {
+        tCrooked.push(item)
+      } else if (dice < 0.62) {
+        tHigh.push(item)
+      } else if (dice < 0.81) {
+        tHighCrooked.push(item)
       } else {
-        // Middle & inner ring: rich organic mix
-        if (dice < 0.25) tStandard.push(item)
-        else if (dice < 0.48) tCrooked.push(item)
-        else if (dice < 0.68) tHighCrooked.push(item)
-        else if (dice < 0.86) tHighRound.push(item)
-        else tHigh.push(item)
+        tHighRound.push(item)
       }
     })
 
@@ -337,14 +320,14 @@ export const Forest: React.FC = () => {
 
   return (
     <group>
-      {/* 5 Tree Types (Instanced: 5 draw calls total for ~1400 trees) */}
+      {/* 5 Tree Types (Instanced: 5 draw calls total for all trees) */}
       <InstancedBatch mesh={meshTree} instances={treeInstances} castShadow receiveShadow />
       <InstancedBatch mesh={meshTreeCrooked} instances={treeCrookedInstances} castShadow receiveShadow />
       <InstancedBatch mesh={meshTreeHigh} instances={treeHighInstances} castShadow receiveShadow />
       <InstancedBatch mesh={meshTreeHighCrooked} instances={treeHighCrookedInstances} castShadow receiveShadow />
       <InstancedBatch mesh={meshTreeHighRound} instances={treeHighRoundInstances} castShadow receiveShadow />
 
-      {/* 3 Rock Types (Instanced: 3 draw calls total for ~100 rocks) */}
+      {/* 3 Rock Types (Instanced: 3 draw calls total for all rocks) */}
       <InstancedBatch mesh={meshRockLarge} instances={rockLargeInstances} castShadow receiveShadow />
       <InstancedBatch mesh={meshRockSmall} instances={rockSmallInstances} castShadow receiveShadow />
       <InstancedBatch mesh={meshRockWide} instances={rockWideInstances} castShadow receiveShadow />
