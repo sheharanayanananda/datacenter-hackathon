@@ -6,9 +6,9 @@ import { ModalDetails } from './components/ModalDetails'
 import { AuthModal } from './components/AuthModal'
 import { CharacterSelectModal } from './components/CharacterSelectModal'
 import { PermitStampModal } from './components/PermitStampModal'
-import { StoryDialogueOverlay } from './components/StoryDialogueOverlay'
 import { SevenImpactsModal } from './components/SevenImpactsModal'
 import { UpgradeModal } from './components/UpgradeModal'
+import { CivicDialogueModal } from './components/CivicDialogueModal'
 import { CityStats, InspectionTab, HouseInfo } from './types'
 
 const AppContent: React.FC = () => {
@@ -98,14 +98,14 @@ const AppContent: React.FC = () => {
       {/* 3. Official Municipal Permit Stamping Modal */}
       <PermitStampModal />
 
-      {/* 4. Story Cutscene & Construction Duration Ticker */}
-      <StoryDialogueOverlay />
-
-      {/* 5. Hackathon 7 Core Impacts Explorer Modal */}
+      {/* 4. Hackathon 7 Core Impacts Explorer Modal */}
       <SevenImpactsModal />
 
       {/* 6. Level Upgrade Modal */}
       <UpgradeModal />
+
+      {/* 7. Clash-of-Clans Civilian Debate Dialogue */}
+      <CivicDialogueModal />
 
       {/* 7. Existing House Inspection & Microgrid Modal */}
       <ModalDetails

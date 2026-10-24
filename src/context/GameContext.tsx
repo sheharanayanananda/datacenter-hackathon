@@ -17,6 +17,7 @@ interface GameContextType {
   activeImpactKey: ImpactDimensionKey | null;
   isUpgradeModalOpen: boolean;
   isSevenImpactsOpen: boolean;
+  activeCivilianScenarioId: string | null;
   
   // Actions
   signIn: (identifier: string, pass: string) => Promise<void>;
@@ -29,6 +30,8 @@ interface GameContextType {
   selectCharacter: (characterId: string) => Promise<void>;
   signPermit: () => Promise<void>;
   finishStoryDialogue: () => Promise<void>;
+  closeCivilianDialogue: () => void;
+  triggerCivilianScenario: (scenarioId: string) => void;
   upgradeLevel: (targetLevel: DataCenterLevel) => Promise<void>;
   setDemoLevel: (targetLevel: DataCenterLevel) => Promise<void>;
   
@@ -55,6 +58,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [activeImpactKey, setActiveImpactKey] = useState<ImpactDimensionKey | null>(null)
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
   const [isSevenImpactsOpen, setIsSevenImpactsOpen] = useState(false)
+  const [activeCivilianScenarioId, setActiveCivilianScenarioId] = useState<string | null>(null)
 
   const moneyRef = useRef(money)
   moneyRef.current = money
@@ -237,14 +241,18 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signPermit = async () => {
     const timestamp = new Date().toISOString()
-    setGameStage('CONSTRUCTION_STORY')
+    setGameStage('SIMULATION')
+    setLevel(1)
+    setActiveCivilianScenarioId('phase1')
 
     if (!user?.isGuest) {
       try {
         const { save: updated } = await api.game.updateSave({
           permit_approved: 1,
           permit_approved_at: timestamp,
-          game_stage: 'CONSTRUCTION_STORY',
+          game_stage: 'SIMULATION',
+          level: 1,
+          story_dialog_seen: 1,
         })
         setSave(updated)
       } catch (err) {
@@ -256,6 +264,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const finishStoryDialogue = async () => {
     setGameStage('SIMULATION')
     setLevel(1)
+    // Open Phase 1 Clash-of-Clans civilian debate
+    setActiveCivilianScenarioId('phase1')
 
     if (!user?.isGuest) {
       try {
@@ -271,11 +281,23 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const triggerCivilianScenario = (scenarioId: string) => {
+    setActiveCivilianScenarioId(scenarioId)
+  }
+
+  const closeCivilianDialogue = () => {
+    setActiveCivilianScenarioId(null)
+  }
+
   const upgradeLevel = async (targetLevel: DataCenterLevel) => {
     setLevel(targetLevel)
     const cost = targetLevel === 2 ? 15000 : 50000
     setMoney((prev) => Math.max(0, prev - cost))
     setXp((prev) => Math.min(xpNeeded, prev + 25))
+
+    // Trigger debate between civilians for this upgrade
+    const scenarioKey = targetLevel === 2 ? 'level2' : 'level3'
+    setActiveCivilianScenarioId(scenarioKey)
 
     if (!user?.isGuest) {
       try {
@@ -320,6 +342,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activeImpactKey,
         isUpgradeModalOpen,
         isSevenImpactsOpen,
+        activeCivilianScenarioId,
         signIn,
         signUp,
         signInAsGuest,
@@ -328,6 +351,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         selectCharacter,
         signPermit,
         finishStoryDialogue,
+        closeCivilianDialogue,
+        triggerCivilianScenario,
         upgradeLevel,
         setDemoLevel,
         setActiveImpactKey,
