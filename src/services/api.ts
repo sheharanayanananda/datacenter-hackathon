@@ -1,6 +1,7 @@
 import { User, GameSave } from '../types/game'
 
 const TOKEN_KEY = 'ecotown_jwt_token'
+const API_BASE = ((import.meta as any).env?.VITE_API_URL || '').replace(/\/$/, '')
 
 let inMemoryToken: string | null = null
 
@@ -31,7 +32,7 @@ const getHeaders = () => {
 export const api = {
   auth: {
     signUp: async (username: string, email: string, password: string, role?: string): Promise<{ token: string; user: User; save: GameSave }> => {
-      const res = await fetch('/api/auth/signup', {
+      const res = await fetch(`${API_BASE}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password, role }),
@@ -43,7 +44,7 @@ export const api = {
     },
 
     signIn: async (identifier: string, password: string): Promise<{ token: string; user: User; save: GameSave }> => {
-      const res = await fetch('/api/auth/signin', {
+      const res = await fetch(`${API_BASE}/api/auth/signin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, password }),
@@ -55,7 +56,7 @@ export const api = {
     },
 
     guest: async (): Promise<{ token: string; user: User; save: GameSave }> => {
-      const res = await fetch('/api/auth/guest', {
+      const res = await fetch(`${API_BASE}/api/auth/guest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
@@ -66,7 +67,7 @@ export const api = {
     },
 
     getMe: async (): Promise<{ user: User; save: GameSave }> => {
-      const res = await fetch('/api/auth/me', {
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -82,7 +83,7 @@ export const api = {
 
   game: {
     getSave: async (): Promise<{ save: GameSave }> => {
-      const res = await fetch('/api/game/save', {
+      const res = await fetch(`${API_BASE}/api/game/save`, {
         method: 'GET',
         headers: getHeaders(),
       })
@@ -92,7 +93,7 @@ export const api = {
     },
 
     updateSave: async (updateData: Partial<GameSave> & { addedPlaytimeSeconds?: number }): Promise<{ success: boolean; save: GameSave }> => {
-      const res = await fetch('/api/game/save', {
+      const res = await fetch(`${API_BASE}/api/game/save`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(updateData),
@@ -103,7 +104,7 @@ export const api = {
     },
 
     resetSave: async (): Promise<{ success: boolean; save: GameSave }> => {
-      const res = await fetch('/api/game/reset', {
+      const res = await fetch(`${API_BASE}/api/game/reset`, {
         method: 'POST',
         headers: getHeaders(),
       })

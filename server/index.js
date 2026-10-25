@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { db, userQueries, saveQueries } from './db.js'
+import { initDb, checkHealth, userQueries, saveQueries } from './db.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -29,17 +29,17 @@ const authenticate = (req, res, next) => {
 }
 
 // 1. Healthcheck
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
   try {
-    const row = db.prepare('SELECT 1 as test').get()
-    res.json({ status: 'ok', db: row.test === 1 ? 'connected' : 'error', timestamp: new Date().toISOString() })
+    const dbStatus = await checkHealth()
+    res.json({ status: 'ok', db: dbStatus, timestamp: new Date().toISOString() })
   } catch (err) {
     res.status(500).json({ status: 'error', error: err.message })
   }
 })
 
 // 2. Sign Up
-app.post('/api/auth/signup', (req, res) => {
+app.post('/api/auth/signup', async (req, res) => {
   try {
     const { username, email, password, role } = req.body
     if (!username || !email || !password) {
@@ -49,10 +49,12 @@ app.post('/api/auth/signup', (req, res) => {
     const cleanUsername = username.trim().toLowerCase()
     const cleanEmail = email.trim().toLowerCase()
 
-    if (userQueries.findByUsername.get(cleanUsername)) {
+    const existingUser = await userQueries.findByUsername(cleanUsername)
+    if (existingUser) {
       return res.status(409).json({ error: 'Username already taken' })
     }
-    if (userQueries.findByEmail.get(cleanEmail)) {
+    const existingEmail = await userQueries.findByEmail(cleanEmail)
+    if (existingEmail) {
       return res.status(409).json({ error: 'Email already registered' })
     }
 
@@ -60,11 +62,10 @@ app.post('/api/auth/signup', (req, res) => {
     const passwordHash = bcrypt.hashSync(password, salt)
     const assignedRole = role || 'Municipal Climate Director'
 
-    const info = userQueries.create.run(cleanUsername, cleanEmail, passwordHash, assignedRole)
-    const userId = Number(info.lastInsertRowid)
+    const userId = await userQueries.create(cleanUsername, cleanEmail, passwordHash, assignedRole)
 
     // Create initial game save
-    saveQueries.createInitialSave.run(userId)
+    await saveQueries.createInitialSave(userId)
 
     const user = {
       id: userId,
@@ -73,7 +74,7 @@ app.post('/api/auth/signup', (req, res) => {
       role: assignedRole,
     }
 
-    const save = saveQueries.findByUserId.get(userId)
+    const save = await saveQueries.findByUserId(userId)
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' })
 
     res.status(201).json({ token, user, save })
@@ -84,7 +85,7 @@ app.post('/api/auth/signup', (req, res) => {
 })
 
 // 3. Sign In
-app.post('/api/auth/signin', (req, res) => {
+app.post('/api/auth/signin', async (req, res) => {
   try {
     const { identifier, password } = req.body
     if (!identifier || !password) {
@@ -92,9 +93,9 @@ app.post('/api/auth/signin', (req, res) => {
     }
 
     const cleanIdentifier = identifier.trim().toLowerCase()
-    let userRow = userQueries.findByUsername.get(cleanIdentifier)
+    let userRow = await userQueries.findByUsername(cleanIdentifier)
     if (!userRow) {
-      userRow = userQueries.findByEmail.get(cleanIdentifier)
+      userRow = await userQueries.findByEmail(cleanIdentifier)
     }
 
     if (!userRow) {
@@ -106,8 +107,8 @@ app.post('/api/auth/signin', (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' })
     }
 
-    userQueries.updateLastLogin.run(userRow.id)
-    const save = saveQueries.findByUserId.get(userRow.id)
+    await userQueries.updateLastLogin(userRow.id)
+    const save = await saveQueries.findByUserId(userRow.id)
 
     const user = {
       id: userRow.id,
@@ -163,7 +164,7 @@ app.post('/api/auth/guest', (req, res) => {
 })
 
 // 5. Get Current User Profile
-app.get('/api/auth/me', authenticate, (req, res) => {
+app.get('/api/auth/me', authenticate, async (req, res) => {
   try {
     if (req.user.isGuest || req.user.id === -1) {
       const user = {
@@ -192,11 +193,11 @@ app.get('/api/auth/me', authenticate, (req, res) => {
       return res.json({ user, save })
     }
 
-    const user = userQueries.findById.get(req.user.id)
+    const user = await userQueries.findById(req.user.id)
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
     }
-    const save = saveQueries.findByUserId.get(req.user.id)
+    const save = await saveQueries.findByUserId(req.user.id)
     res.json({ user, save })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -204,7 +205,7 @@ app.get('/api/auth/me', authenticate, (req, res) => {
 })
 
 // 6. Get Game Save
-app.get('/api/game/save', authenticate, (req, res) => {
+app.get('/api/game/save', authenticate, async (req, res) => {
   try {
     if (req.user.isGuest || req.user.id === -1) {
       return res.json({
@@ -227,10 +228,10 @@ app.get('/api/game/save', authenticate, (req, res) => {
       })
     }
 
-    let save = saveQueries.findByUserId.get(req.user.id)
+    let save = await saveQueries.findByUserId(req.user.id)
     if (!save) {
-      saveQueries.createInitialSave.run(req.user.id)
-      save = saveQueries.findByUserId.get(req.user.id)
+      await saveQueries.createInitialSave(req.user.id)
+      save = await saveQueries.findByUserId(req.user.id)
     }
     res.json({ save })
   } catch (err) {
@@ -239,9 +240,9 @@ app.get('/api/game/save', authenticate, (req, res) => {
 })
 
 // 7. Update Game Save (Auto-Save / Milestone Save)
-app.put('/api/game/save', authenticate, (req, res) => {
+app.put('/api/game/save', authenticate, async (req, res) => {
   try {
-    // Guest sessions are strictly ephemeral: never write to SQLite database
+    // Guest sessions are strictly ephemeral: never write to database
     if (req.user.isGuest || req.user.id === -1) {
       return res.json({
         success: true,
@@ -260,22 +261,22 @@ app.put('/api/game/save', authenticate, (req, res) => {
     const unlockedImpacts = req.body.unlockedImpacts ?? req.body.unlocked_impacts
     const addedPlaytimeSeconds = req.body.addedPlaytimeSeconds ?? req.body.added_playtime_seconds ?? 0
 
-    saveQueries.updateSave.run(
-      characterId !== undefined ? characterId : null,
-      gameStage !== undefined ? gameStage : null,
-      level !== undefined ? level : null,
-      money !== undefined ? money : null,
-      xp !== undefined ? xp : null,
-      xpNeeded !== undefined ? xpNeeded : null,
-      permitApproved !== undefined ? (permitApproved ? 1 : 0) : null,
-      permitApprovedAt !== undefined ? permitApprovedAt : null,
-      storyDialogSeen !== undefined ? (storyDialogSeen ? 1 : 0) : null,
-      unlockedImpacts !== undefined ? JSON.stringify(unlockedImpacts) : null,
+    await saveQueries.updateSave({
+      characterId,
+      gameStage,
+      level,
+      money,
+      xp,
+      xpNeeded,
+      permitApproved,
+      permitApprovedAt,
+      storyDialogSeen,
+      unlockedImpacts,
       addedPlaytimeSeconds,
-      req.user.id
-    )
+      userId: req.user.id,
+    })
 
-    const updated = saveQueries.findByUserId.get(req.user.id)
+    const updated = await saveQueries.findByUserId(req.user.id)
     res.json({ success: true, save: updated })
   } catch (err) {
     console.error('Update save error:', err)
@@ -284,10 +285,10 @@ app.put('/api/game/save', authenticate, (req, res) => {
 })
 
 // 8. Reset Game Save
-app.post('/api/game/reset', authenticate, (req, res) => {
+app.post('/api/game/reset', authenticate, async (req, res) => {
   try {
-    saveQueries.resetSave.run(req.user.id)
-    const reset = saveQueries.findByUserId.get(req.user.id)
+    await saveQueries.resetSave(req.user.id)
+    const reset = await saveQueries.findByUserId(req.user.id)
     res.json({ success: true, save: reset })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -295,7 +296,7 @@ app.post('/api/game/reset', authenticate, (req, res) => {
 })
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`⚡ [Nordic EcoTown API] Server running on http://localhost:${PORT}`)
-  console.log(`🗄️ [SQLite] Database initialized at ecotown.db`)
+  await initDb()
 })

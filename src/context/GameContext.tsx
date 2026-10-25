@@ -90,11 +90,24 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [])
 
-  // Auto-authenticate on load if token exists
+  // Auto-authenticate on load if token exists or local demo profile exists
   useEffect(() => {
     const initAuth = async () => {
       const token = getStoredToken()
       if (!token) {
+        // Check if there is an existing local demo profile
+        const localUserStr = localStorage.getItem('ecotown_demo_user')
+        const localSaveStr = localStorage.getItem('ecotown_demo_save')
+        if (localUserStr && localSaveStr) {
+          try {
+            const parsedUser = JSON.parse(localUserStr)
+            const parsedSave = JSON.parse(localSaveStr)
+            setUser(parsedUser)
+            applySaveData(parsedSave)
+          } catch {
+            // ignore malformed storage
+          }
+        }
         setLoading(false)
         return
       }
@@ -110,7 +123,20 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(fetchedUser)
         applySaveData(fetchedSave)
       } catch (err) {
-        console.warn('Session expired or server unavailable, logging out:', err)
+        console.warn('Backend unavailable, checking local demo profile:', err)
+        const localUserStr = localStorage.getItem('ecotown_demo_user')
+        const localSaveStr = localStorage.getItem('ecotown_demo_save')
+        if (localUserStr && localSaveStr) {
+          try {
+            const parsedUser = JSON.parse(localUserStr)
+            const parsedSave = JSON.parse(localSaveStr)
+            setUser(parsedUser)
+            applySaveData(parsedSave)
+            return
+          } catch {
+            // ignore
+          }
+        }
         api.auth.signOut()
         setUser(null)
       } finally {
@@ -156,15 +182,75 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Auth Handlers
   const signIn = async (identifier: string, pass: string) => {
-    const data = await api.auth.signIn(identifier, pass)
-    setUser(data.user)
-    applySaveData(data.save)
+    try {
+      const data = await api.auth.signIn(identifier, pass)
+      setUser(data.user)
+      applySaveData(data.save)
+    } catch (err) {
+      console.warn('Backend unavailable, using local demo profile:', err)
+      const localUser = {
+        id: 1,
+        username: identifier,
+        email: `${identifier.toLowerCase()}@tampere.fi`,
+        role: 'Municipal Climate Director',
+      }
+      const localSave: GameSave = {
+        id: 1,
+        user_id: 1,
+        character_id: null,
+        game_stage: 'CHARACTER_SELECT',
+        level: 1,
+        money: 50000000,
+        xp: 25,
+        xp_needed: 70,
+        permit_approved: 0,
+        permit_approved_at: null,
+        story_dialog_seen: 0,
+        unlocked_impacts: '[]',
+        playtime_seconds: 0,
+        updated_at: new Date().toISOString(),
+      }
+      localStorage.setItem('ecotown_demo_user', JSON.stringify(localUser))
+      localStorage.setItem('ecotown_demo_save', JSON.stringify(localSave))
+      setUser(localUser)
+      applySaveData(localSave)
+    }
   }
 
   const signUp = async (username: string, email: string, pass: string, role?: string) => {
-    const data = await api.auth.signUp(username, email, pass, role)
-    setUser(data.user)
-    applySaveData(data.save)
+    try {
+      const data = await api.auth.signUp(username, email, pass, role)
+      setUser(data.user)
+      applySaveData(data.save)
+    } catch (err) {
+      console.warn('Backend unavailable, using local demo profile:', err)
+      const localUser = {
+        id: 1,
+        username: username,
+        email: email || `${username.toLowerCase()}@tampere.fi`,
+        role: role || 'Municipal Climate Director',
+      }
+      const localSave: GameSave = {
+        id: 1,
+        user_id: 1,
+        character_id: null,
+        game_stage: 'CHARACTER_SELECT',
+        level: 1,
+        money: 50000000,
+        xp: 25,
+        xp_needed: 70,
+        permit_approved: 0,
+        permit_approved_at: null,
+        story_dialog_seen: 0,
+        unlocked_impacts: '[]',
+        playtime_seconds: 0,
+        updated_at: new Date().toISOString(),
+      }
+      localStorage.setItem('ecotown_demo_user', JSON.stringify(localUser))
+      localStorage.setItem('ecotown_demo_save', JSON.stringify(localSave))
+      setUser(localUser)
+      applySaveData(localSave)
+    }
   }
 
   const signInAsGuest = async () => {
@@ -205,6 +291,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = () => {
     api.auth.signOut()
+    localStorage.removeItem('ecotown_demo_user')
+    localStorage.removeItem('ecotown_demo_save')
     setUser(null)
     setSave(null)
     setGameStage('CHARACTER_SELECT')

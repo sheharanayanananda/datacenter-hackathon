@@ -1,1 +1,11 @@
 node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env.example
+ecotown.db
+ecotown.db-shm
+ecotown.db-wal
+.DS_Store

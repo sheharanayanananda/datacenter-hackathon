@@ -54,7 +54,7 @@ export const AuthModal: React.FC = () => {
       <div className="w-full max-w-md bg-white border-4 border-white rounded-[32px] shadow-2xl p-6 sm:p-8 text-slate-800 relative overflow-hidden">
         {/* Header Badge */}
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-[#58cc02] text-white flex items-center justify-center shadow-md mb-3">
             <Building2 className="w-7 h-7 stroke-[2.5]" />
           </div>
           <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
