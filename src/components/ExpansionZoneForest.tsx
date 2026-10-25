@@ -19,7 +19,11 @@ interface TreeInstance {
   modelIdx: number;
 }
 
-export const ExpansionZoneForest: React.FC<{ level: number }> = ({ level }) => {
+export const ExpansionZoneForest: React.FC<{
+  level: number;
+  onSelectForest?: (pos: [number, number, number]) => void;
+  onHover?: (hovered: boolean) => void;
+}> = ({ level, onSelectForest, onHover }) => {
   const gltf0 = useGLTF(TREE_MODELS[0])
   const gltf1 = useGLTF(TREE_MODELS[1])
   const gltf2 = useGLTF(TREE_MODELS[2])
@@ -131,7 +135,20 @@ export const ExpansionZoneForest: React.FC<{ level: number }> = ({ level }) => {
   }, [level])
 
   return (
-    <group>
+    <group
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        onHover?.(true)
+      }}
+      onPointerOut={(e) => {
+        e.stopPropagation()
+        onHover?.(false)
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        onSelectForest?.([e.point.x, e.point.y + 1.2, e.point.z])
+      }}
+    >
       {trees.map((t, idx) => (
         <group
           key={`exp-tree-${level}-${idx}`}

@@ -5,11 +5,15 @@ import { useFrame } from '@react-three/fiber'
 interface NasineulaTowerProps {
   position?: [number, number, number];
   scale?: number | [number, number, number];
+  onClick?: () => void;
+  onHover?: (hovered: boolean) => void;
 }
 
 export const NasineulaTower: React.FC<NasineulaTowerProps> = ({
   position = [-5.0, 0, -6.0],
   scale = 0.7,
+  onClick,
+  onHover,
 }) => {
   const beaconRef = useRef<THREE.PointLight>(null)
 
@@ -25,7 +29,22 @@ export const NasineulaTower: React.FC<NasineulaTowerProps> = ({
     typeof scale === 'number' ? [scale, scale, scale] : scale
 
   return (
-    <group position={position} scale={scaleVector}>
+    <group
+      position={position}
+      scale={scaleVector}
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        onHover?.(true)
+      }}
+      onPointerOut={(e) => {
+        e.stopPropagation()
+        onHover?.(false)
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick?.()
+      }}
+    >
       {/* 1. Base Pavilion & Entry Foundation */}
       <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[1.5, 1.8, 0.5, 24]} />

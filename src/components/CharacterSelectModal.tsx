@@ -128,12 +128,7 @@ export const CharacterSelectModal: React.FC = () => {
                     {char.bio}
                   </p>
 
-                  {/* Learning Focus Quote - Duolingo Speech Bubble */}
-                  <div className="bg-slate-100 rounded-2xl p-3 border-2 border-slate-200 mb-4 relative">
-                    <p className="text-[11px] italic text-slate-700 font-bold leading-snug">
-                      "{char.quote}"
-                    </p>
-                  </div>
+
                 </div>
 
                 {/* Duolingo 3D Action Button */}

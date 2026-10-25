@@ -102,9 +102,8 @@ export const PermitStampModal: React.FC = () => {
             </div>
           </div>
 
-          <p className="text-[11px] text-slate-500 italic bg-amber-50/70 p-2 rounded-xl border border-amber-200/70">
-            "By stamping this master permit, you officially authorize the city to begin site preparation,
-            protect the surrounding forest, and construct the entire zero-emission campus!"
+          <p className="text-[11px] text-slate-500 italic text-center">
+            Authorizes site preparation, forest protection, and construction of the zero-emission campus.
           </p>
         </div>
 

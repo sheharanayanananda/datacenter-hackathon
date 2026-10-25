@@ -5,7 +5,11 @@ import { useGLTF } from '@react-three/drei'
 // Preload Kenney industrial solar panel models
 useGLTF.preload('/assets/models/industrial/solar-panel-landscape-group.glb')
 
-export const SolarFarm: React.FC<{ level?: number; onSelectSolar?: () => void }> = ({ level = 3, onSelectSolar }) => {
+export const SolarFarm: React.FC<{
+  level?: number;
+  onSelectSolar?: () => void;
+  onHover?: (hovered: boolean) => void;
+}> = ({ level = 3, onSelectSolar, onHover }) => {
   const landscapeGroupGLTF = useGLTF('/assets/models/industrial/solar-panel-landscape-group.glb')
 
   // Clone template scene graph with shadows and PBR photovoltaic shading
@@ -61,6 +65,14 @@ export const SolarFarm: React.FC<{ level?: number; onSelectSolar?: () => void }>
 
   return (
     <group
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        onHover?.(true)
+      }}
+      onPointerOut={(e) => {
+        e.stopPropagation()
+        onHover?.(false)
+      }}
       onClick={(e) => {
         e.stopPropagation()
         onSelectSolar?.()

@@ -5,7 +5,11 @@ import { useGLTF } from '@react-three/drei'
 
 useGLTF.preload('/assets/models/water/low_poly_water.glb')
 
-export const Terrain: React.FC<{ onSelectLake?: () => void }> = ({ onSelectLake }) => {
+export const Terrain: React.FC<{
+  onSelectLake?: () => void;
+  onClearInspect?: () => void;
+  onHover?: (hovered: boolean) => void;
+}> = ({ onSelectLake, onClearInspect, onHover }) => {
   const waterRef = useRef<THREE.Mesh>(null)
   const baseWaterPositions = useRef<Float32Array | null>(null)
   const waterGltf = useGLTF('/assets/models/water/low_poly_water.glb')
@@ -376,6 +380,9 @@ export const Terrain: React.FC<{ onSelectLake?: () => void }> = ({ onSelectLake 
         rotation={[-Math.PI / 2, 0, 0]}
         geometry={groundGeom}
         receiveShadow
+        onClick={() => {
+          onClearInspect?.()
+        }}
       >
         <meshStandardMaterial
           map={grassTexture}
@@ -391,6 +398,11 @@ export const Terrain: React.FC<{ onSelectLake?: () => void }> = ({ onSelectLake 
           e.stopPropagation()
           onSelectLake?.()
         }}
+        onPointerOver={(e) => {
+          e.stopPropagation()
+          onHover?.(true)
+        }}
+        onPointerOut={() => onHover?.(false)}
       >
         {/* Layer A: Natural 3D Sloping Sandy Beach & Embankment */}
         <mesh geometry={shoreGeom} receiveShadow>

@@ -102,7 +102,10 @@ const InstancedBulbs: React.FC<{ lights: LightDef[] }> = ({ lights }) => {
   return <instancedMesh ref={instancedRef} args={[bulbGeom, bulbMat, lights.length]} />
 }
 
-export const ModularRoads: React.FC = () => {
+export const ModularRoads: React.FC<{
+  onSelectRoad?: (pos: [number, number, number]) => void;
+  onHover?: (hovered: boolean) => void;
+}> = ({ onSelectRoad, onHover }) => {
   const straightGLTF = useGLTF('/assets/models/roads/road-straight.glb')
   const bendGLTF = useGLTF('/assets/models/roads/road-bend.glb')
   const intersectionGLTF = useGLTF('/assets/models/roads/road-intersection.glb')
@@ -283,7 +286,20 @@ export const ModularRoads: React.FC = () => {
   )
 
   return (
-    <group>
+    <group
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        onHover?.(true)
+      }}
+      onPointerOut={(e) => {
+        e.stopPropagation()
+        onHover?.(false)
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        onSelectRoad?.([e.point.x, e.point.y + 0.3, e.point.z])
+      }}
+    >
       {/* High-Performance Instanced Road Meshes (Consolidates 80+ meshes into 4 draw calls) */}
       <InstancedGroup mesh={straightMesh} items={straightTiles} receiveShadow />
       <InstancedGroup mesh={bendMesh} items={bendTiles} receiveShadow />

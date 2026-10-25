@@ -60,7 +60,8 @@ const IndustrialHouseModel: React.FC<{
 
 export const NordicHouses: React.FC<{
   onSelectHouse?: (house: HouseInfo) => void;
-}> = ({ onSelectHouse }) => {
+  onHover?: (hovered: boolean) => void;
+}> = ({ onSelectHouse, onHover }) => {
   // Houses perfectly aligned to the street grid lines:
   // - North row along z = 2.6 (all facing SOUTH towards Main Avenue z = 4.5)
   // - South row along z = 6.4 (all facing NORTH towards Main Avenue z = 4.5)
@@ -73,7 +74,7 @@ export const NordicHouses: React.FC<{
       // West of crossroad (x = -7.0)
       {
         id: 'house-nw-1',
-        name: 'Eco Workshop A-1',
+        name: 'Civilian Home A-1',
         position: [-13.5, 0, 2.6],
         rotation: Math.PI,
         color: 'yellow',
@@ -81,7 +82,7 @@ export const NordicHouses: React.FC<{
       },
       {
         id: 'house-nw-2',
-        name: 'Eco Workshop A-2',
+        name: 'Civilian Home A-2',
         position: [-11.0, 0, 2.6],
         rotation: Math.PI,
         color: 'red',
@@ -89,7 +90,7 @@ export const NordicHouses: React.FC<{
       },
       {
         id: 'house-nw-3',
-        name: 'Eco Workshop A-3',
+        name: 'Civilian Home A-3',
         position: [-8.8, 0, 2.6],
         rotation: Math.PI,
         color: 'slate',
@@ -98,7 +99,7 @@ export const NordicHouses: React.FC<{
       // East of crossroad (x = -7.0)
       {
         id: 'house-ne-1',
-        name: 'Eco Workshop B-1',
+        name: 'Civilian Home B-1',
         position: [-5.2, 0, 2.6],
         rotation: Math.PI,
         color: 'brown',
@@ -106,7 +107,7 @@ export const NordicHouses: React.FC<{
       },
       {
         id: 'house-ne-2',
-        name: 'Eco Workshop B-2',
+        name: 'Civilian Home B-2',
         position: [-3.0, 0, 2.6],
         rotation: Math.PI,
         color: 'yellow',
@@ -114,7 +115,7 @@ export const NordicHouses: React.FC<{
       },
       {
         id: 'house-ne-3',
-        name: 'Eco Workshop B-3',
+        name: 'Civilian Home B-3',
         position: [-0.8, 0, 2.6],
         rotation: Math.PI,
         color: 'slate',
@@ -127,7 +128,7 @@ export const NordicHouses: React.FC<{
       // West of crossroad (x = -7.0)
       {
         id: 'house-sw-1',
-        name: 'Eco Workshop C-1',
+        name: 'Civilian Home C-1',
         position: [-13.5, 0, 6.4],
         rotation: 0,
         color: 'red',
@@ -135,7 +136,7 @@ export const NordicHouses: React.FC<{
       },
       {
         id: 'house-sw-2',
-        name: 'Eco Workshop C-2',
+        name: 'Civilian Home C-2',
         position: [-11.0, 0, 6.4],
         rotation: 0,
         color: 'yellow',
@@ -143,7 +144,7 @@ export const NordicHouses: React.FC<{
       },
       {
         id: 'house-sw-3',
-        name: 'Eco Workshop C-3',
+        name: 'Civilian Home C-3',
         position: [-8.8, 0, 6.4],
         rotation: 0,
         color: 'slate',
@@ -152,7 +153,7 @@ export const NordicHouses: React.FC<{
       // East of crossroad (x = -7.0)
       {
         id: 'house-se-1',
-        name: 'Eco Workshop D-1',
+        name: 'Civilian Home D-1',
         position: [-5.2, 0, 6.4],
         rotation: 0,
         color: 'red',
@@ -160,7 +161,7 @@ export const NordicHouses: React.FC<{
       },
       {
         id: 'house-se-2',
-        name: 'Eco Workshop D-2',
+        name: 'Civilian Home D-2',
         position: [-3.0, 0, 6.4],
         rotation: 0,
         color: 'yellow',
@@ -168,7 +169,7 @@ export const NordicHouses: React.FC<{
       },
       {
         id: 'house-se-3',
-        name: 'Eco Workshop D-3',
+        name: 'Civilian Home D-3',
         position: [-0.8, 0, 6.4],
         rotation: 0,
         color: 'slate',
@@ -181,7 +182,7 @@ export const NordicHouses: React.FC<{
       // West of street: faces EAST into street [rot = -Math.PI / 2]
       {
         id: 'house-tail-1',
-        name: 'Eco Workshop S-1',
+        name: 'Civilian Home S-1',
         position: [-8.8, 0, 9.2],
         rotation: -Math.PI / 2,
         color: 'yellow',
@@ -190,7 +191,7 @@ export const NordicHouses: React.FC<{
       // East of street: faces WEST into street [rot = Math.PI / 2]
       {
         id: 'house-tail-2',
-        name: 'Eco Workshop S-2',
+        name: 'Civilian Home S-2',
         position: [-5.2, 0, 9.2],
         rotation: Math.PI / 2,
         color: 'red',
@@ -207,6 +208,14 @@ export const NordicHouses: React.FC<{
           key={house.id}
           position={house.position}
           rotation={[0, house.rotation, 0]}
+          onPointerOver={(e) => {
+            e.stopPropagation()
+            onHover?.(true)
+          }}
+          onPointerOut={(e) => {
+            e.stopPropagation()
+            onHover?.(false)
+          }}
           onClick={(e) => {
             e.stopPropagation()
             onSelectHouse?.(house)

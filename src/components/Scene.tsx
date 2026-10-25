@@ -13,10 +13,13 @@ import { Carpark } from './Carpark'
 import { ModularRoads } from './ModularRoads'
 import { SolarFarm } from './SolarFarm'
 import { ExpansionZoneForest } from './ExpansionZoneForest'
+import { ObjectInspectBubble } from './ObjectInspectBubble'
+import { getInspectableObjectData, InspectableObjectData } from '../data/inspectableObjects'
 import { HouseInfo, InspectionTab } from '../types'
 
 interface SceneProps {
   onOpenDetails: (tab: InspectionTab) => void;
+  onExploreImpact?: (key: string) => void;
   onSelectHouse: (house: HouseInfo) => void;
   dataCenterHovered: boolean;
   setDataCenterHovered: (h: boolean) => void;
@@ -146,6 +149,7 @@ const SunController: React.FC<{
 
 export const Scene: React.FC<SceneProps> = ({
   onOpenDetails,
+  onExploreImpact,
   onSelectHouse,
   dataCenterHovered,
   setDataCenterHovered,
@@ -157,6 +161,23 @@ export const Scene: React.FC<SceneProps> = ({
   const dirLightRef = useRef<THREE.DirectionalLight>(null)
   const lightTargetRef = useRef<THREE.Object3D>(new THREE.Object3D())
   const [spacePressed, setSpacePressed] = useState(false)
+  const [inspectedObject, setInspectedObject] = useState<InspectableObjectData | null>(null)
+  const [hoveredInteractable, setHoveredInteractable] = useState(false)
+
+  // Live-update inspected object stats if the simulation level changes
+  useEffect(() => {
+    if (inspectedObject) {
+      setInspectedObject((prev) =>
+        prev
+          ? getInspectableObjectData(prev.category, level as any, {
+              id: prev.id,
+              customTitle: prev.title,
+              position: prev.position,
+            })
+          : null
+      )
+    }
+  }, [level])
 
   // Hold Spacebar for temporary Pan mode
   useEffect(() => {
@@ -179,17 +200,21 @@ export const Scene: React.FC<SceneProps> = ({
   }, [])
 
   const isPanning = controlMode === 'pan' || spacePressed
+  const cursorClass = hoveredInteractable
+    ? 'cursor-pointer'
+    : isPanning
+    ? 'cursor-grab active:cursor-grabbing'
+    : 'cursor-move active:cursor-grabbing'
 
   return (
     <div
-      className={`w-full h-full select-none ${
-        isPanning ? 'cursor-grab active:cursor-grabbing' : 'cursor-move active:cursor-grabbing'
-      }`}
+      className={`w-full h-full select-none ${cursorClass}`}
       onContextMenu={(e) => e.preventDefault()}
     >
       <Canvas
         shadows="soft"
         orthographic
+        onPointerMissed={() => setHoveredInteractable(false)}
         gl={{
           antialias: true,
           toneMapping: THREE.ACESFilmicToneMapping,
@@ -250,21 +275,80 @@ export const Scene: React.FC<SceneProps> = ({
 
         <Suspense fallback={null}>
           {/* 1. Base Terrain & Lake Näsijärvi */}
-          <Terrain />
+          <Terrain
+            onClearInspect={() => setInspectedObject(null)}
+            onHover={setHoveredInteractable}
+            onSelectLake={() =>
+              setInspectedObject(
+                getInspectableObjectData('lake', level as any, {
+                  id: 'lake-nasijarvi',
+                  customTitle: 'Lake Näsijärvi',
+                  position: [-16.0, 0.4, -19.5],
+                })
+              )
+            }
+          />
 
           {/* 1b. Modular Kenney 3D Road Network */}
-          <ModularRoads />
+          <ModularRoads
+            onHover={setHoveredInteractable}
+            onSelectRoad={(pos) =>
+              setInspectedObject(
+                getInspectableObjectData('road', level as any, { position: pos })
+              )
+            }
+          />
 
           {/* 2. Forest Perimeter & Dynamic Unbuilt Lot Trees */}
-          <Forest />
-          <ExpansionZoneForest level={level} />
+          <Forest
+            onHover={setHoveredInteractable}
+            onSelectForest={(pos) =>
+              setInspectedObject(
+                getInspectableObjectData('forest', level as any, { position: pos })
+              )
+            }
+            onSelectRock={(pos) =>
+              setInspectedObject(
+                getInspectableObjectData('rock', level as any, { position: pos })
+              )
+            }
+          />
+          <ExpansionZoneForest
+            level={level}
+            onHover={setHoveredInteractable}
+            onSelectForest={(pos) =>
+              setInspectedObject(
+                getInspectableObjectData('forest', level as any, { position: pos })
+              )
+            }
+          />
 
           {/* 3. Tampere Näsinneula Observation Tower (North-West) */}
-          <NasineulaTower position={[-5.0, 0, -6.0]} />
+          <NasineulaTower
+            position={[-5.0, 0, -6.0]}
+            onHover={setHoveredInteractable}
+            onClick={() =>
+              setInspectedObject(
+                getInspectableObjectData('tower', level as any, {
+                  position: [-5.0, 7.5, -6.0],
+                })
+              )
+            }
+          />
 
           {/* 4. Power Generation Infrastructure (South-East Wind Turbines) */}
           <WindTurbines
             level={level}
+            onHover={setHoveredInteractable}
+            onSelectTurbine={(turbine) =>
+              setInspectedObject(
+                getInspectableObjectData('wind', level as any, {
+                  id: turbine.id,
+                  customTitle: turbine.name,
+                  position: turbine.position,
+                })
+              )
+            }
           />
 
           {/* 5. Central Data Center Campus: Level 1 has 1 DC; Levels 2 & 3 have all 4 */}
@@ -272,7 +356,19 @@ export const Scene: React.FC<SceneProps> = ({
           <DataCenter
             position={[10.0, 0, -5.5]}
             isSelected={dataCenterHovered}
-            onHover={setDataCenterHovered}
+            onHover={(h) => {
+              setDataCenterHovered(h)
+              setHoveredInteractable(h)
+            }}
+            onClick={() =>
+              setInspectedObject(
+                getInspectableObjectData('datacenter', level as any, {
+                  id: 'dc-sw',
+                  customTitle: 'Data Center (Hall 1)',
+                  position: [10.0, 2.2, -5.5],
+                })
+              )
+            }
           />
 
           {/* South-East Facility (Activated in Level 2 & 3) */}
@@ -280,7 +376,19 @@ export const Scene: React.FC<SceneProps> = ({
             <DataCenter
               position={[16.0, 0, -5.5]}
               isSelected={dataCenterHovered}
-              onHover={setDataCenterHovered}
+              onHover={(h) => {
+                setDataCenterHovered(h)
+                setHoveredInteractable(h)
+              }}
+              onClick={() =>
+                setInspectedObject(
+                  getInspectableObjectData('datacenter', level as any, {
+                    id: 'dc-se',
+                    customTitle: 'Data Center (Hall 2)',
+                    position: [16.0, 2.2, -5.5],
+                  })
+                )
+              }
             />
           )}
 
@@ -289,7 +397,19 @@ export const Scene: React.FC<SceneProps> = ({
             <DataCenter
               position={[10.0, 0, -11.5]}
               isSelected={dataCenterHovered}
-              onHover={setDataCenterHovered}
+              onHover={(h) => {
+                setDataCenterHovered(h)
+                setHoveredInteractable(h)
+              }}
+              onClick={() =>
+                setInspectedObject(
+                  getInspectableObjectData('datacenter', level as any, {
+                    id: 'dc-nw',
+                    customTitle: 'Data Center (Hall 3)',
+                    position: [10.0, 2.2, -11.5],
+                  })
+                )
+              }
             />
           )}
 
@@ -298,27 +418,73 @@ export const Scene: React.FC<SceneProps> = ({
             <DataCenter
               position={[16.0, 0, -11.5]}
               isSelected={dataCenterHovered}
-              onHover={setDataCenterHovered}
+              onHover={(h) => {
+                setDataCenterHovered(h)
+                setHoveredInteractable(h)
+              }}
+              onClick={() =>
+                setInspectedObject(
+                  getInspectableObjectData('datacenter', level as any, {
+                    id: 'dc-ne',
+                    customTitle: 'Data Center (Hall 4 - Peak)',
+                    position: [16.0, 2.2, -11.5],
+                  })
+                )
+              }
             />
           )}
 
           {/* 5b. Dedicated Solar Microgrid Farm (Level 1: none, Level 2: some, Level 3: full) */}
           <SolarFarm
             level={level}
+            onHover={setHoveredInteractable}
+            onSelectSolar={() =>
+              setInspectedObject(
+                getInspectableObjectData('solar', level as any, {
+                  position: [14.0, 1.0, -14.0],
+                })
+              )
+            }
           />
 
           {/* 6. Carpark (Attached East of Datacenter) */}
-          <Carpark />
+          <Carpark
+            onHover={setHoveredInteractable}
+            onClick={() =>
+              setInspectedObject(
+                getInspectableObjectData('carpark', level as any, {
+                  position: [22.8, 0.4, -8.5],
+                })
+              )
+            }
+          />
 
           {/* 7. Nordic Residential Houses (South-West Quadrant) */}
           <NordicHouses
+            onHover={setHoveredInteractable}
             onSelectHouse={(house) => {
               onSelectHouse(house)
+              setInspectedObject(
+                getInspectableObjectData('house', level as any, {
+                  id: house.id,
+                  customTitle: house.name,
+                  position: [house.position[0], house.position[1] + 1.2, house.position[2]],
+                })
+              )
             }}
           />
 
           {/* 8. Animated Road Traffic (scaled by Level) */}
           <Traffic level={level} />
+
+          {/* 9. Diegetic 3D World Inspect Bubble */}
+          {inspectedObject && (
+            <ObjectInspectBubble
+              data={inspectedObject}
+              onClose={() => setInspectedObject(null)}
+              onExploreImpact={onExploreImpact}
+            />
+          )}
         </Suspense>
 
         <MapController

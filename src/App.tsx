@@ -56,9 +56,13 @@ const AppContent: React.FC = () => {
             setActiveTab(tab)
           }
         }}
-        onSelectHouse={(house) => {
+        onExploreImpact={(key) => {
+          setActiveImpactKey(key as any)
+          setIsSevenImpactsOpen(true)
+        }}
+        onSelectHouse={(_house) => {
           setActiveTab(null)
-          setSelectedHouse(house)
+          // Old full-screen ModalDetails removed in favor of the new 3D world inspect bubble
         }}
         dataCenterHovered={dataCenterHovered}
         setDataCenterHovered={setDataCenterHovered}
@@ -107,10 +111,10 @@ const AppContent: React.FC = () => {
       {/* 7. Clash-of-Clans Civilian Debate Dialogue */}
       <CivicDialogueModal />
 
-      {/* 7. Existing House Inspection & Microgrid Modal */}
+      {/* Legacy Modal Details (only for build/upgrade inspection tabs) */}
       <ModalDetails
         tab={activeTab}
-        selectedHouse={selectedHouse}
+        selectedHouse={null}
         stats={stats}
         onClose={() => {
           setActiveTab(null)

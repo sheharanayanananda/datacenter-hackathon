@@ -3,7 +3,15 @@ import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 
+export interface TurbineInfo {
+  id: string;
+  name: string;
+  position: [number, number, number];
+}
+
 interface TurbineInstanceProps {
+  id: string;
+  name: string;
   position: [number, number, number];
   rotation?: number;
   scale?: number;
@@ -13,6 +21,8 @@ interface TurbineInstanceProps {
   rotorGeom: THREE.BufferGeometry;
   towerMaterial: THREE.Material;
   rotorMaterial: THREE.Material;
+  onSelectTurbine?: (turbine: TurbineInfo) => void;
+  onHover?: (hovered: boolean) => void;
 }
 
 const MODEL_PATH = '/assets/models/wind_turbine/wind_turbine.glb?v=3'
@@ -24,6 +34,8 @@ const HUB_Y = 0.16
 const HUB_Z = 2.540625
 
 const TurbineInstance: React.FC<TurbineInstanceProps> = ({
+  id,
+  name,
   position,
   rotation = 0,
   scale = 1.8,
@@ -33,6 +45,8 @@ const TurbineInstance: React.FC<TurbineInstanceProps> = ({
   rotorGeom,
   towerMaterial,
   rotorMaterial,
+  onSelectTurbine,
+  onHover,
 }) => {
   const rotorRef = useRef<THREE.Group>(null)
 
@@ -42,23 +56,53 @@ const TurbineInstance: React.FC<TurbineInstanceProps> = ({
     }
   })
 
-  return (
-    <group position={position} rotation={[0, rotation, 0]} scale={[scale, scale, scale]}>
-      {/* Root transform: rotate around X by -90 deg to convert native Z-up to Three.js Y-up */}
-      <group rotation={[-Math.PI / 2, 0, 0]}>
-        {/* Tower & Nacelle stand in pure solid white */}
-        <mesh geometry={towerGeom} material={towerMaterial} castShadow receiveShadow />
+  const hubWorldY = position[1] + HUB_Z * scale
 
-        {/* Spinning Rotor Blades centered at the hub with signature red tip stripes */}
-        <group position={[HUB_X, HUB_Y, HUB_Z]} ref={rotorRef} rotation={[0, initialRotation, 0]}>
-          <mesh geometry={rotorGeom} material={rotorMaterial} castShadow receiveShadow />
+  return (
+    <group
+      position={position}
+      rotation={[0, rotation, 0]}
+      onClick={(e) => {
+        e.stopPropagation()
+        onSelectTurbine?.({
+          id,
+          name,
+          position: [position[0], hubWorldY, position[2]],
+        })
+      }}
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        onHover?.(true)
+      }}
+      onPointerOut={() => onHover?.(false)}
+    >
+      {/* Invisible hit cylinder for smooth, effortless clicking on thin turbine towers */}
+      <mesh position={[0, 2.5, 0]}>
+        <cylinderGeometry args={[1.2, 1.4, 5.2, 8]} />
+        <meshBasicMaterial visible={false} />
+      </mesh>
+
+      <group scale={[scale, scale, scale]}>
+        {/* Root transform: rotate around X by -90 deg to convert native Z-up to Three.js Y-up */}
+        <group rotation={[-Math.PI / 2, 0, 0]}>
+          {/* Tower & Nacelle stand in pure solid white */}
+          <mesh geometry={towerGeom} material={towerMaterial} castShadow receiveShadow />
+
+          {/* Spinning Rotor Blades centered at the hub with signature red tip stripes */}
+          <group position={[HUB_X, HUB_Y, HUB_Z]} ref={rotorRef} rotation={[0, initialRotation, 0]}>
+            <mesh geometry={rotorGeom} material={rotorMaterial} castShadow receiveShadow />
+          </group>
         </group>
       </group>
     </group>
   )
 }
 
-export const WindTurbines: React.FC<{ level?: number; onSelectWind?: () => void }> = ({ level = 3, onSelectWind }) => {
+export const WindTurbines: React.FC<{
+  level?: number;
+  onSelectTurbine?: (turbine: TurbineInfo) => void;
+  onHover?: (hovered: boolean) => void;
+}> = ({ level = 3, onSelectTurbine, onHover }) => {
   const gltf = useGLTF(MODEL_PATH)
 
   // Dedicated pure white PBR material for the stand (tower pole & nacelle housing)
@@ -150,14 +194,11 @@ export const WindTurbines: React.FC<{ level?: number; onSelectWind?: () => void 
   if (!towerGeom || !rotorGeom || !rotorMaterial) return null
 
   return (
-    <group
-      onClick={(e) => {
-        e.stopPropagation()
-        onSelectWind?.()
-      }}
-    >
+    <group>
       {/* Wind Turbines in the South-East corner: Level 1 has 1, Level 2 has 2, Level 3 has 3 */}
       <TurbineInstance
+        id="wind-1"
+        name="Wind Turbine 1"
         position={[11.0, 0, 9.5]}
         scale={1.8}
         speedMultiplier={1.0}
@@ -167,9 +208,13 @@ export const WindTurbines: React.FC<{ level?: number; onSelectWind?: () => void 
         rotorGeom={rotorGeom}
         towerMaterial={towerMaterial}
         rotorMaterial={rotorMaterial}
+        onSelectTurbine={onSelectTurbine}
+        onHover={onHover}
       />
       {level >= 2 && (
         <TurbineInstance
+          id="wind-2"
+          name="Wind Turbine 2"
           position={[18.5, 0, 11.5]}
           scale={1.75}
           speedMultiplier={1.12}
@@ -179,10 +224,14 @@ export const WindTurbines: React.FC<{ level?: number; onSelectWind?: () => void 
           rotorGeom={rotorGeom}
           towerMaterial={towerMaterial}
           rotorMaterial={rotorMaterial}
+          onSelectTurbine={onSelectTurbine}
+          onHover={onHover}
         />
       )}
       {level >= 3 && (
         <TurbineInstance
+          id="wind-3"
+          name="Wind Turbine 3"
           position={[14.0, 0, 17.5]}
           scale={1.85}
           speedMultiplier={0.92}
@@ -192,6 +241,8 @@ export const WindTurbines: React.FC<{ level?: number; onSelectWind?: () => void 
           rotorGeom={rotorGeom}
           towerMaterial={towerMaterial}
           rotorMaterial={rotorMaterial}
+          onSelectTurbine={onSelectTurbine}
+          onHover={onHover}
         />
       )}
     </group>

@@ -78,7 +78,11 @@ function createRng(seed: number) {
   }
 }
 
-export const Forest: React.FC = () => {
+export const Forest: React.FC<{
+  onSelectForest?: (pos: [number, number, number]) => void;
+  onSelectRock?: (pos: [number, number, number]) => void;
+  onHover?: (hovered: boolean) => void;
+}> = ({ onSelectForest, onSelectRock, onHover }) => {
   // Load 5 tree variations and 3 rock variations
   const gltfTree = useGLTF(MODEL_PATHS.tree)
   const gltfTreeCrooked = useGLTF(MODEL_PATHS.treeCrooked)
@@ -354,16 +358,46 @@ export const Forest: React.FC = () => {
   return (
     <group>
       {/* 5 Tree Types (Instanced: 5 draw calls total for all trees) */}
-      <InstancedBatch mesh={meshTree} instances={treeInstances} castShadow receiveShadow />
-      <InstancedBatch mesh={meshTreeCrooked} instances={treeCrookedInstances} castShadow receiveShadow />
-      <InstancedBatch mesh={meshTreeHigh} instances={treeHighInstances} castShadow receiveShadow />
-      <InstancedBatch mesh={meshTreeHighCrooked} instances={treeHighCrookedInstances} castShadow receiveShadow />
-      <InstancedBatch mesh={meshTreeHighRound} instances={treeHighRoundInstances} castShadow receiveShadow />
+      <group
+        onPointerOver={(e) => {
+          e.stopPropagation()
+          onHover?.(true)
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation()
+          onHover?.(false)
+        }}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelectForest?.([e.point.x, e.point.y + 1.2, e.point.z])
+        }}
+      >
+        <InstancedBatch mesh={meshTree} instances={treeInstances} castShadow receiveShadow />
+        <InstancedBatch mesh={meshTreeCrooked} instances={treeCrookedInstances} castShadow receiveShadow />
+        <InstancedBatch mesh={meshTreeHigh} instances={treeHighInstances} castShadow receiveShadow />
+        <InstancedBatch mesh={meshTreeHighCrooked} instances={treeHighCrookedInstances} castShadow receiveShadow />
+        <InstancedBatch mesh={meshTreeHighRound} instances={treeHighRoundInstances} castShadow receiveShadow />
+      </group>
 
       {/* 3 Rock Types (Instanced: 3 draw calls total for all rocks) */}
-      <InstancedBatch mesh={meshRockLarge} instances={rockLargeInstances} castShadow receiveShadow />
-      <InstancedBatch mesh={meshRockSmall} instances={rockSmallInstances} castShadow receiveShadow />
-      <InstancedBatch mesh={meshRockWide} instances={rockWideInstances} castShadow receiveShadow />
+      <group
+        onPointerOver={(e) => {
+          e.stopPropagation()
+          onHover?.(true)
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation()
+          onHover?.(false)
+        }}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelectRock?.([e.point.x, e.point.y + 0.8, e.point.z])
+        }}
+      >
+        <InstancedBatch mesh={meshRockLarge} instances={rockLargeInstances} castShadow receiveShadow />
+        <InstancedBatch mesh={meshRockSmall} instances={rockSmallInstances} castShadow receiveShadow />
+        <InstancedBatch mesh={meshRockWide} instances={rockWideInstances} castShadow receiveShadow />
+      </group>
     </group>
   )
 }

@@ -66,9 +66,26 @@ export const CARPARK_STALLS: ParkingStall[] = [
   },
 ]
 
-export const Carpark: React.FC = () => {
+export const Carpark: React.FC<{
+  onClick?: () => void;
+  onHover?: (hovered: boolean) => void;
+}> = ({ onClick, onHover }) => {
   return (
-    <group position={[22.8, 0.01, -8.5]}>
+    <group
+      position={[22.8, 0.01, -8.5]}
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        onHover?.(true)
+      }}
+      onPointerOut={(e) => {
+        e.stopPropagation()
+        onHover?.(false)
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick?.()
+      }}
+    >
       {/* 1. Main Asphalt Surface (Width: 4.0, Depth: 5.8) - Matching Road Asphalt Color & Roughness */}
       <mesh
         position={[0, 0.005, 0]}
@@ -107,12 +124,12 @@ export const Carpark: React.FC = () => {
         <meshStandardMaterial color="#cbd5e1" roughness={0.75} />
       </mesh>
 
-      {/* Driveway Entrance Stop / Yield Line */}
+      {/* Driveway Entrance Stop / Yield Line (Positioned before the Entrance Crosswalk) */}
       <mesh
-        position={[-1.98, 0.008, 0]}
+        position={[-1.55, 0.008, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
       >
-        <planeGeometry args={[0.07, 1.36]} />
+        <planeGeometry args={[0.07, 1.28]} />
         <meshStandardMaterial color="#f8fafc" roughness={0.4} />
       </mesh>
 
@@ -308,14 +325,14 @@ export const Carpark: React.FC = () => {
         <meshStandardMaterial color="#f8fafc" roughness={0.4} />
       </mesh>
 
-      {/* 7. Pedestrian Zebra Crossing at North End (Connecting Staff Walkway to Datacenter) */}
-      {[-0.36, -0.12, 0.12, 0.36].map((xOffset, idx) => (
+      {/* 7. Pedestrian Zebra Crossing at Carpark Entrance (Across the Driveway Threshold) */}
+      {[-0.48, -0.24, 0, 0.24, 0.48].map((zVal, idx) => (
         <mesh
           key={`crosswalk-${idx}`}
-          position={[xOffset, 0.008, -2.6]}
+          position={[-1.80, 0.008, zVal]}
           rotation={[-Math.PI / 2, 0, 0]}
         >
-          <planeGeometry args={[0.14, 0.38]} />
+          <planeGeometry args={[0.38, 0.12]} />
           <meshStandardMaterial color="#f8fafc" roughness={0.4} />
         </mesh>
       ))}
