@@ -105,18 +105,8 @@ export const WindTurbines: React.FC<{
 }> = ({ level = 3, onSelectTurbine, onHover }) => {
   const gltf = useGLTF(MODEL_PATH)
 
-  // Dedicated pure white PBR material for the stand (tower pole & nacelle housing)
-  const towerMaterial = useMemo(() => {
-    return new THREE.MeshStandardMaterial({
-      color: '#f8fafc',
-      roughness: 0.32,
-      metalness: 0.08,
-      side: THREE.DoubleSide,
-    })
-  }, [])
-
-  // Extract geometries and rotor material
-  const { towerGeom, rotorGeom, rotorMaterial } = useMemo(() => {
+  // Extract geometries and textured turbine material
+  const { towerGeom, rotorGeom, turbineMaterial } = useMemo(() => {
     let sourceMesh: THREE.Mesh | null = null
     gltf.scene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh && !sourceMesh) {
@@ -125,26 +115,40 @@ export const WindTurbines: React.FC<{
     })
 
     if (!sourceMesh) {
-      return { towerGeom: null, rotorGeom: null, rotorMaterial: null }
+      return { towerGeom: null, rotorGeom: null, turbineMaterial: null }
     }
 
     const origGeom = (sourceMesh as THREE.Mesh).geometry
     const origMat = (sourceMesh as THREE.Mesh).material
 
-    // Rotor material (retains the blade texture with red tip stripes)
-    const rMat = (Array.isArray(origMat) ? origMat[0] : origMat).clone() as THREE.MeshStandardMaterial
-    rMat.side = THREE.DoubleSide
-    rMat.roughness = 0.32
-    rMat.metalness = 0.05
-    rMat.color.set('#ffffff')
+    // Turbine material (uses authentic model texture for tower, nacelle head, and red-tipped blades)
+    const tMat = (Array.isArray(origMat) ? origMat[0] : origMat).clone() as THREE.MeshStandardMaterial
+    tMat.side = THREE.DoubleSide
+    tMat.roughness = 0.35
+    tMat.metalness = 0.05
+    tMat.color.set('#ffffff')
 
     const posAttr = origGeom.attributes.position
-    const normAttr = origGeom.attributes.normal
     const uvAttr = origGeom.attributes.uv
     const indexAttr = origGeom.index
 
     if (!indexAttr) {
-      return { towerGeom: null, rotorGeom: null, rotorMaterial: rMat }
+      return { towerGeom: null, rotorGeom: null, turbineMaterial: tMat }
+    }
+
+    // The Sketchfab low-poly turbine model (748 triangles total):
+    // Static base (tower pole & generator housing nacelle):
+    // - Tower pole caps: triangles 36..53
+    // - Tower pole cylinder walls: triangles 72..89
+    // - Generator housing nacelle head: triangles 720..747
+    // Total 64 triangles.
+    //
+    // Rotating assembly (hub nose cone & 3 blades):
+    // - Hub nose cone: triangles 0..35
+    // - 3 Rotor blades: triangles 90..719
+    // Total 684 triangles.
+    const isStaticTriangle = (t: number) => {
+      return (t >= 36 && t <= 53) || (t >= 72 && t <= 89) || (t >= 720 && t <= 747)
     }
 
     const towerIndices: number[] = []
@@ -154,21 +158,35 @@ export const WindTurbines: React.FC<{
       const i0 = indexAttr.getX(t * 3)
       const i1 = indexAttr.getX(t * 3 + 1)
       const i2 = indexAttr.getX(t * 3 + 2)
-      const minY = Math.min(posAttr.getY(i0), posAttr.getY(i1), posAttr.getY(i2))
-      if (minY >= 0.09) {
-        rotorIndices.push(i0, i1, i2)
-      } else {
+      if (isStaticTriangle(t)) {
         towerIndices.push(i0, i1, i2)
+      } else {
+        rotorIndices.push(i0, i1, i2)
       }
     }
 
-    // 1. Tower Geometry (stand pole, base, nacelle housing)
-    const tGeom = new THREE.BufferGeometry()
-    tGeom.setAttribute('position', posAttr)
-    if (normAttr) tGeom.setAttribute('normal', normAttr)
-    if (uvAttr) tGeom.setAttribute('uv', uvAttr)
-    tGeom.setIndex(towerIndices)
+    // 1. Tower & Nacelle Geometry (clean non-indexed facet normals + smooth radial cylinder normals)
+    const tGeomIndexed = new THREE.BufferGeometry()
+    tGeomIndexed.setAttribute('position', posAttr)
+    if (uvAttr) tGeomIndexed.setAttribute('uv', uvAttr)
+    tGeomIndexed.setIndex(towerIndices)
+
+    const tGeom = tGeomIndexed.toNonIndexed()
     tGeom.computeVertexNormals()
+
+    const tPos = tGeom.attributes.position
+    const tNorm = tGeom.attributes.normal
+    for (let i = 0; i < tPos.count; i++) {
+      const z = tPos.getZ(i)
+      if (z < 2.45) {
+        const x = tPos.getX(i)
+        const y = tPos.getY(i)
+        const r = Math.hypot(x, y)
+        if (r > 0.0001) {
+          tNorm.setXYZ(i, x / r, y / r, 0)
+        }
+      }
+    }
 
     // 2. Rotor Geometry with vertices centered at hub [HUB_X, HUB_Y, HUB_Z]
     const rotorPosAttr = posAttr.clone()
@@ -181,17 +199,18 @@ export const WindTurbines: React.FC<{
       )
     }
 
-    const rGeom = new THREE.BufferGeometry()
-    rGeom.setAttribute('position', rotorPosAttr)
-    if (normAttr) rGeom.setAttribute('normal', normAttr)
-    if (uvAttr) rGeom.setAttribute('uv', uvAttr)
-    rGeom.setIndex(rotorIndices)
+    const rGeomIndexed = new THREE.BufferGeometry()
+    rGeomIndexed.setAttribute('position', rotorPosAttr)
+    if (uvAttr) rGeomIndexed.setAttribute('uv', uvAttr)
+    rGeomIndexed.setIndex(rotorIndices)
+
+    const rGeom = rGeomIndexed.toNonIndexed()
     rGeom.computeVertexNormals()
 
-    return { towerGeom: tGeom, rotorGeom: rGeom, rotorMaterial: rMat }
+    return { towerGeom: tGeom, rotorGeom: rGeom, turbineMaterial: tMat }
   }, [gltf])
 
-  if (!towerGeom || !rotorGeom || !rotorMaterial) return null
+  if (!towerGeom || !rotorGeom || !turbineMaterial) return null
 
   return (
     <group>
@@ -206,8 +225,8 @@ export const WindTurbines: React.FC<{
         initialRotation={0.3}
         towerGeom={towerGeom}
         rotorGeom={rotorGeom}
-        towerMaterial={towerMaterial}
-        rotorMaterial={rotorMaterial}
+        towerMaterial={turbineMaterial}
+        rotorMaterial={turbineMaterial}
         onSelectTurbine={onSelectTurbine}
         onHover={onHover}
       />
@@ -222,8 +241,8 @@ export const WindTurbines: React.FC<{
           initialRotation={1.9}
           towerGeom={towerGeom}
           rotorGeom={rotorGeom}
-          towerMaterial={towerMaterial}
-          rotorMaterial={rotorMaterial}
+          towerMaterial={turbineMaterial}
+          rotorMaterial={turbineMaterial}
           onSelectTurbine={onSelectTurbine}
           onHover={onHover}
         />
@@ -239,8 +258,8 @@ export const WindTurbines: React.FC<{
           initialRotation={3.7}
           towerGeom={towerGeom}
           rotorGeom={rotorGeom}
-          towerMaterial={towerMaterial}
-          rotorMaterial={rotorMaterial}
+          towerMaterial={turbineMaterial}
+          rotorMaterial={turbineMaterial}
           onSelectTurbine={onSelectTurbine}
           onHover={onHover}
         />
